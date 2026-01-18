@@ -13,6 +13,11 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from "@expo-google-fonts/plus-jakarta-sans";
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_500Medium,
+  PlayfairDisplay_600SemiBold,
+} from "@expo-google-fonts/playfair-display";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query-client";
@@ -29,6 +34,9 @@ export default function App() {
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium,
+    PlayfairDisplay_600SemiBold,
   });
 
   useEffect(() => {
@@ -51,7 +59,7 @@ export default function App() {
                 <RootStackNavigator />
                 <FloatingButtons />
               </NavigationContainer>
-              <StatusBar style="auto" />
+              <StatusBar style="dark" />
             </KeyboardProvider>
           </GestureHandlerRootView>
         </SafeAreaProvider>
@@ -63,5 +71,6 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
   },
 });
