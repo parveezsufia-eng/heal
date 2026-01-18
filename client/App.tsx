@@ -24,7 +24,6 @@ import { queryClient } from "@/lib/query-client";
 
 import RootStackNavigator from "@/navigation/RootStackNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { FloatingButtons } from "@/components/FloatingButtons";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,7 +56,6 @@ export default function App() {
             <KeyboardProvider>
               <NavigationContainer>
                 <RootStackNavigator />
-                <FloatingButtons />
               </NavigationContainer>
               <StatusBar style="dark" />
             </KeyboardProvider>

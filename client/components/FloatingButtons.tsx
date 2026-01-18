@@ -83,7 +83,7 @@ export function FloatingButtons() {
 
   return (
     <>
-      <View style={[styles.container, { bottom: insets.bottom + 100 }]}>
+      <View style={[styles.container, { top: insets.top + 60 }]}>
         <AnimatedPressable
           testID="button-emergency"
           accessibilityLabel="Emergency button"

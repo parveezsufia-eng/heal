@@ -14,6 +14,7 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
+import { FloatingButtons } from "@/components/FloatingButtons";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
@@ -80,17 +81,19 @@ export default function HomeScreen() {
   const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.md,
-        paddingBottom: tabBarHeight + Spacing["5xl"],
-        paddingHorizontal: Spacing.xl,
-      }}
-      scrollIndicatorInsets={{ bottom: insets.bottom }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <FloatingButtons />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingTop: headerHeight + Spacing.md,
+          paddingBottom: tabBarHeight + Spacing["5xl"],
+          paddingHorizontal: Spacing.xl,
+        }}
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
         <View>
           <ThemedText style={styles.greeting}>{greeting}</ThemedText>
           <ThemedText style={styles.headerTitle}>
@@ -205,12 +208,16 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   header: {
