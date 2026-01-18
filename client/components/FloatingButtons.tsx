@@ -85,6 +85,8 @@ export function FloatingButtons() {
     <>
       <View style={[styles.container, { bottom: insets.bottom + 100 }]}>
         <AnimatedPressable
+          testID="button-emergency"
+          accessibilityLabel="Emergency button"
           style={[
             styles.emergencyButton,
             { backgroundColor: Colors.light.emergency },
@@ -102,6 +104,8 @@ export function FloatingButtons() {
         </AnimatedPressable>
 
         <AnimatedPressable
+          testID="button-chat"
+          accessibilityLabel="AI Chat button"
           style={[
             styles.chatButton,
             { backgroundColor: Colors.light.text, borderColor: theme.border },
