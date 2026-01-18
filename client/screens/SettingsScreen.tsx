@@ -6,6 +6,7 @@ import {
   Pressable,
   Switch,
   Platform,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -182,6 +183,54 @@ export default function SettingsScreen() {
                 <ThemedText type="body">Terms of Service</ThemedText>
                 <ThemedText type="small" style={{ color: theme.textSecondary }}>
                   Our service agreement
+                </ThemedText>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+          </Pressable>
+        </Card>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="h3" style={styles.sectionTitle}>
+          Emergency Support
+        </ThemedText>
+        <Card style={[styles.card, { backgroundColor: Colors.light.emergency + "10" }]}>
+          <Pressable 
+            style={styles.settingRow}
+            onPress={() => {
+              if (Platform.OS !== "web") {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+              }
+              Linking.openURL("tel:988");
+            }}
+          >
+            <View style={styles.settingInfo}>
+              <View style={[styles.settingIcon, { backgroundColor: Colors.light.emergency }]}>
+                <Feather name="phone-call" size={18} color="#FFF" />
+              </View>
+              <View>
+                <ThemedText type="body" style={{ fontWeight: "600" }}>Crisis Helpline</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Call 988 - Available 24/7
+                </ThemedText>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={20} color={Colors.light.emergency} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: Colors.light.emergency + "20" }]} />
+          <Pressable 
+            style={styles.settingRow}
+            onPress={() => Linking.openURL("sms:741741?body=HOME")}
+          >
+            <View style={styles.settingInfo}>
+              <View style={[styles.settingIcon, { backgroundColor: Colors.light.emergency + "20" }]}>
+                <Feather name="message-square" size={18} color={Colors.light.emergency} />
+              </View>
+              <View>
+                <ThemedText type="body">Text Crisis Line</ThemedText>
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  Text HOME to 741741
                 </ThemedText>
               </View>
             </View>

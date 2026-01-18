@@ -85,25 +85,6 @@ export function FloatingButtons() {
     <>
       <View style={[styles.container, { top: insets.top + 60 }]}>
         <AnimatedPressable
-          testID="button-emergency"
-          accessibilityLabel="Emergency button"
-          style={[
-            styles.emergencyButton,
-            { backgroundColor: Colors.light.emergency },
-            emergencyAnimatedStyle,
-          ]}
-          onPress={handleEmergencyPress}
-          onPressIn={() => {
-            emergencyScale.value = withSpring(0.9, springConfig);
-          }}
-          onPressOut={() => {
-            emergencyScale.value = withSpring(1, springConfig);
-          }}
-        >
-          <Feather name="phone" size={16} color="#FFF" />
-        </AnimatedPressable>
-
-        <AnimatedPressable
           testID="button-chat"
           accessibilityLabel="AI Chat button"
           style={[
