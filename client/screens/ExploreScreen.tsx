@@ -13,7 +13,6 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -38,7 +37,6 @@ const mentors = [
     experience: "12 years",
     rating: 4.9,
     sessions: 450,
-    image: null,
   },
   {
     id: "2",
@@ -47,7 +45,6 @@ const mentors = [
     experience: "8 years",
     rating: 4.8,
     sessions: 320,
-    image: null,
   },
   {
     id: "3",
@@ -56,27 +53,20 @@ const mentors = [
     experience: "15 years",
     rating: 4.9,
     sessions: 680,
-    image: null,
   },
 ];
 
 const selfHealTools = [
-  { id: "breathing", icon: "wind", label: "Breathing Bubble", color: Colors.light.primary },
-  { id: "mindtest", icon: "brain", label: "Mind Testing", color: Colors.light.secondary },
+  { id: "breathing", icon: "wind", label: "Breathing", color: Colors.light.secondary },
+  { id: "mindtest", icon: "activity", label: "Mind Test", color: Colors.light.primary },
   { id: "diet", icon: "coffee", label: "Diet Plans", color: Colors.light.accent },
-  { id: "audio", icon: "headphones", label: "Mindful Audio", color: Colors.light.success },
+  { id: "audio", icon: "headphones", label: "Audio", color: Colors.light.success },
 ];
 
 const mindBoosters = [
-  { id: "facts", icon: "zap", label: "Fun Facts", description: "Interesting mental health facts" },
-  { id: "riddles", icon: "help-circle", label: "Riddles", description: "Brain teasers for focus" },
-  { id: "stories", icon: "book-open", label: "Stories", description: "Inspiring wellness stories" },
-];
-
-const healthContent = [
-  { id: "vlogs", icon: "video", label: "Wellness Vlogs" },
-  { id: "podcasts", icon: "mic", label: "Podcasts" },
-  { id: "exercises", icon: "activity", label: "Exercises" },
+  { id: "facts", icon: "zap", label: "Fun Facts" },
+  { id: "riddles", icon: "help-circle", label: "Riddles" },
+  { id: "stories", icon: "book-open", label: "Stories" },
 ];
 
 export default function ExploreScreen() {
@@ -106,15 +96,15 @@ export default function ExploreScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.lg,
+        paddingTop: headerHeight + Spacing.md,
         paddingBottom: tabBarHeight + Spacing["5xl"],
         paddingHorizontal: Spacing.lg,
       }}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault }]}>
-        <Feather name="search" size={20} color={theme.textSecondary} />
+      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault }, Shadows.small]}>
+        <Feather name="search" size={18} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
           placeholder="Search mentors, resources..."
@@ -136,19 +126,20 @@ export default function ExploreScreen() {
                     ? category.color
                     : theme.backgroundDefault,
               },
+              selectedCategory === category.id && Shadows.small,
             ]}
             onPress={() => handleCategoryPress(category.id)}
           >
             <Feather
               name={category.icon as any}
-              size={20}
-              color={selectedCategory === category.id ? "#FFF" : theme.text}
+              size={18}
+              color={selectedCategory === category.id ? "#FFF" : category.color}
             />
             <ThemedText
               type="small"
               style={[
                 styles.categoryLabel,
-                selectedCategory === category.id && { color: "#FFF" },
+                { color: selectedCategory === category.id ? "#FFF" : theme.text },
               ]}
             >
               {category.label}
@@ -162,19 +153,13 @@ export default function ExploreScreen() {
           <ThemedText type="h3" style={styles.sectionTitle}>
             Expert Mentors
           </ThemedText>
-          <ThemedText type="body" style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            Get personalized guidance from experienced professionals
-          </ThemedText>
           <View style={styles.mentorList}>
             {mentors.map((mentor) => (
-              <Pressable
-                key={mentor.id}
-                onPress={() => handleMentorPress(mentor.id)}
-              >
-                <Card style={[styles.mentorCard, { backgroundColor: theme.backgroundDefault }]}>
+              <Pressable key={mentor.id} onPress={() => handleMentorPress(mentor.id)}>
+                <View style={[styles.mentorCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}>
                   <View style={styles.mentorHeader}>
-                    <View style={[styles.mentorAvatar, { backgroundColor: Colors.light.primary + "30" }]}>
-                      <Feather name="user" size={24} color={Colors.light.primary} />
+                    <View style={[styles.mentorAvatar, { backgroundColor: Colors.light.warm + "40" }]}>
+                      <Feather name="user" size={22} color={Colors.light.primary} />
                     </View>
                     <View style={styles.mentorInfo}>
                       <ThemedText type="h4">{mentor.name}</ThemedText>
@@ -182,9 +167,9 @@ export default function ExploreScreen() {
                         {mentor.specialty}
                       </ThemedText>
                     </View>
-                    <View style={styles.ratingBadge}>
+                    <View style={[styles.ratingBadge, { backgroundColor: Colors.light.accent + "20" }]}>
                       <Feather name="star" size={12} color={Colors.light.accent} />
-                      <ThemedText type="small">{mentor.rating}</ThemedText>
+                      <ThemedText type="small" style={{ fontWeight: "600" }}>{mentor.rating}</ThemedText>
                     </View>
                   </View>
                   <View style={styles.mentorStats}>
@@ -201,7 +186,7 @@ export default function ExploreScreen() {
                       </ThemedText>
                     </View>
                   </View>
-                </Card>
+                </View>
               </Pressable>
             ))}
           </View>
@@ -214,42 +199,42 @@ export default function ExploreScreen() {
             Guidance Resources
           </ThemedText>
           <View style={styles.guidanceGrid}>
-            <Card style={[styles.guidanceCard, { backgroundColor: Colors.light.primary + "15" }]}>
+            <Pressable style={[styles.guidanceCard, { backgroundColor: Colors.light.primary + "12" }]}>
               <View style={[styles.guidanceIcon, { backgroundColor: Colors.light.primary }]}>
                 <Feather name="briefcase" size={20} color="#FFF" />
               </View>
-              <ThemedText type="h4">Career Guidance</ThemedText>
+              <ThemedText type="h4">Career</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Resume help, interview prep, job suggestions
+                Resume, interviews
               </ThemedText>
-            </Card>
-            <Card style={[styles.guidanceCard, { backgroundColor: Colors.light.secondary + "15" }]}>
+            </Pressable>
+            <Pressable style={[styles.guidanceCard, { backgroundColor: Colors.light.secondary + "12" }]}>
               <View style={[styles.guidanceIcon, { backgroundColor: Colors.light.secondary }]}>
                 <Feather name="heart" size={20} color="#FFF" />
               </View>
-              <ThemedText type="h4">Relationship Advice</ThemedText>
+              <ThemedText type="h4">Relationship</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Conflict resolution, communication tips
+                Communication tips
               </ThemedText>
-            </Card>
-            <Card style={[styles.guidanceCard, { backgroundColor: Colors.light.accent + "15" }]}>
+            </Pressable>
+            <Pressable style={[styles.guidanceCard, { backgroundColor: Colors.light.accent + "12" }]}>
               <View style={[styles.guidanceIcon, { backgroundColor: Colors.light.accent }]}>
                 <Feather name="dollar-sign" size={20} color="#FFF" />
               </View>
-              <ThemedText type="h4">Financial Wellness</ThemedText>
+              <ThemedText type="h4">Financial</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Budgeting templates, spending analysis
+                Budgeting help
               </ThemedText>
-            </Card>
-            <Card style={[styles.guidanceCard, { backgroundColor: Colors.light.success + "15" }]}>
+            </Pressable>
+            <Pressable style={[styles.guidanceCard, { backgroundColor: Colors.light.success + "12" }]}>
               <View style={[styles.guidanceIcon, { backgroundColor: Colors.light.success }]}>
                 <Feather name="book" size={20} color="#FFF" />
               </View>
-              <ThemedText type="h4">Academic Support</ThemedText>
+              <ThemedText type="h4">Academic</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                Study planning, exam stress management
+                Study planning
               </ThemedText>
-            </Card>
+            </Pressable>
           </View>
         </View>
       ) : null}
@@ -262,8 +247,11 @@ export default function ExploreScreen() {
             </ThemedText>
             <View style={styles.toolsGrid}>
               {selfHealTools.map((tool) => (
-                <Pressable key={tool.id} style={[styles.toolCard, { backgroundColor: theme.backgroundDefault }]}>
-                  <View style={[styles.toolIcon, { backgroundColor: tool.color + "20" }]}>
+                <Pressable
+                  key={tool.id}
+                  style={[styles.toolCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
+                >
+                  <View style={[styles.toolIcon, { backgroundColor: tool.color + "15" }]}>
                     <Feather name={tool.icon as any} size={24} color={tool.color} />
                   </View>
                   <ThemedText type="small" style={styles.toolLabel}>
@@ -278,41 +266,16 @@ export default function ExploreScreen() {
             <ThemedText type="h3" style={styles.sectionTitle}>
               Mind Boosters
             </ThemedText>
-            <View style={styles.boosterList}>
+            <View style={styles.boosterRow}>
               {mindBoosters.map((booster) => (
                 <Pressable
                   key={booster.id}
-                  style={[styles.boosterCard, { backgroundColor: theme.backgroundDefault }]}
+                  style={[styles.boosterCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
                 >
-                  <View style={[styles.boosterIcon, { backgroundColor: Colors.light.primary + "20" }]}>
-                    <Feather name={booster.icon as any} size={20} color={Colors.light.primary} />
+                  <View style={[styles.boosterIcon, { backgroundColor: Colors.light.warm + "30" }]}>
+                    <Feather name={booster.icon as any} size={20} color={Colors.light.accent} />
                   </View>
-                  <View style={styles.boosterInfo}>
-                    <ThemedText type="h4">{booster.label}</ThemedText>
-                    <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                      {booster.description}
-                    </ThemedText>
-                  </View>
-                  <Feather name="chevron-right" size={20} color={theme.textSecondary} />
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <ThemedText type="h3" style={styles.sectionTitle}>
-              Health Content
-            </ThemedText>
-            <View style={styles.contentRow}>
-              {healthContent.map((content) => (
-                <Pressable
-                  key={content.id}
-                  style={[styles.contentCard, { backgroundColor: theme.backgroundDefault }]}
-                >
-                  <View style={[styles.contentIcon, { backgroundColor: Colors.light.secondary + "20" }]}>
-                    <Feather name={content.icon as any} size={24} color={Colors.light.secondary} />
-                  </View>
-                  <ThemedText type="small">{content.label}</ThemedText>
+                  <ThemedText type="small">{booster.label}</ThemedText>
                 </Pressable>
               ))}
             </View>
@@ -338,8 +301,8 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    fontFamily: "Nunito_400Regular",
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
   },
   categoryContainer: {
     flexDirection: "row",
@@ -353,20 +316,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: Spacing.xs,
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
   },
   categoryLabel: {
     fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   section: {
     marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    marginBottom: Spacing.xs,
-  },
-  sectionSubtitle: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   mentorList: {
     gap: Spacing.md,
@@ -395,7 +355,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
-    backgroundColor: Colors.light.accent + "20",
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.sm,
@@ -410,9 +369,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   guidanceGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.md,
   },
   guidanceCard: {
+    width: "47%",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
   },
@@ -422,7 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   toolsGrid: {
     flexDirection: "row",
@@ -441,47 +403,27 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   toolLabel: {
-    textAlign: "center",
     fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
-  boosterList: {
-    gap: Spacing.sm,
+  boosterRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
   },
   boosterCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.md,
-  },
-  boosterIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  boosterInfo: {
-    flex: 1,
-  },
-  contentRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  contentCard: {
     flex: 1,
     alignItems: "center",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
   },
-  contentIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  boosterIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },

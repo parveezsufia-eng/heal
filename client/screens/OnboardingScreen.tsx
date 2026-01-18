@@ -12,11 +12,6 @@ import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-  useSharedValue,
-} from "react-native-reanimated";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Button } from "@/components/Button";
@@ -30,20 +25,20 @@ const onboardingData = [
   {
     id: "1",
     image: require("../assets/images/meditation_onboarding_illustration.png"),
-    title: "Find Your Peace",
-    subtitle: "Take a moment to breathe. Your mental wellness journey starts here.",
+    title: "Your Safe Space",
+    subtitle: "A peaceful sanctuary for your mental wellness journey. Take a breath, you're in the right place.",
   },
   {
     id: "2",
     image: require("../assets/images/support_hands_onboarding_illustration.png"),
-    title: "You're Not Alone",
-    subtitle: "Connect with caring professionals and a supportive community.",
+    title: "Always Supported",
+    subtitle: "Connect with caring professionals and an AI companion that's here for you 24/7.",
   },
   {
     id: "3",
     image: require("../assets/images/growth_onboarding_illustration.png"),
-    title: "Grow Every Day",
-    subtitle: "Track your progress and celebrate your healing journey.",
+    title: "Grow Together",
+    subtitle: "Track your progress, celebrate small wins, and watch yourself bloom.",
   },
 ];
 
@@ -74,12 +69,14 @@ export default function OnboardingScreen() {
 
   const renderItem = ({ item }: { item: (typeof onboardingData)[0] }) => (
     <View style={[styles.slide, { width }]}>
-      <Image
-        source={item.image}
-        style={styles.image}
-        contentFit="contain"
-        transition={300}
-      />
+      <View style={[styles.imageContainer, { backgroundColor: Colors.light.warm + "30" }]}>
+        <Image
+          source={item.image}
+          style={styles.image}
+          contentFit="contain"
+          transition={300}
+        />
+      </View>
       <View style={styles.textContainer}>
         <ThemedText type="h1" style={styles.title}>
           {item.title}
@@ -97,8 +94,18 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../assets/images/icon.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
+          <ThemedText style={[styles.logoText, { color: Colors.light.primary }]}>
+            Heal Here
+          </ThemedText>
+        </View>
         <Pressable onPress={handleSkip} style={styles.skipButton}>
-          <ThemedText type="body" style={{ color: Colors.light.primary }}>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
             Skip
           </ThemedText>
         </Pressable>
@@ -130,7 +137,7 @@ export default function OnboardingScreen() {
                     index === currentIndex
                       ? Colors.light.primary
                       : theme.border,
-                  width: index === currentIndex ? 24 : 8,
+                  width: index === currentIndex ? 28 : 8,
                 },
               ]}
             />
@@ -138,7 +145,7 @@ export default function OnboardingScreen() {
         </View>
 
         <Button onPress={handleNext} style={styles.button}>
-          {currentIndex === onboardingData.length - 1 ? "Get Started" : "Next"}
+          {currentIndex === onboardingData.length - 1 ? "Get Started" : "Continue"}
         </Button>
       </View>
     </View>
@@ -151,8 +158,24 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
+  },
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    marginRight: Spacing.sm,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: "700",
+    fontFamily: "PlusJakartaSans_700Bold",
   },
   skipButton: {
     padding: Spacing.sm,
@@ -161,15 +184,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: Spacing["3xl"],
+    paddingHorizontal: Spacing["2xl"],
+  },
+  imageContainer: {
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: BorderRadius["2xl"],
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing["2xl"],
   },
   image: {
-    width: width * 0.7,
-    height: width * 0.7,
-    marginBottom: Spacing["3xl"],
+    width: "80%",
+    height: "80%",
   },
   textContainer: {
     alignItems: "center",
+    paddingHorizontal: Spacing.lg,
   },
   title: {
     textAlign: "center",
@@ -177,7 +208,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: "center",
-    paddingHorizontal: Spacing.lg,
+    lineHeight: 24,
   },
   footer: {
     paddingHorizontal: Spacing.xl,

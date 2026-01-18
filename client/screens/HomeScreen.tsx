@@ -13,26 +13,23 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 const moods = [
-  { emoji: "happy", icon: "smile", label: "Happy", color: "#9FD8CB" },
-  { emoji: "calm", icon: "coffee", label: "Calm", color: "#A8D5BA" },
-  { emoji: "neutral", icon: "meh", label: "Neutral", color: "#FFD6A5" },
-  { emoji: "sad", icon: "frown", label: "Sad", color: "#E8B4B8" },
-  { emoji: "anxious", icon: "alert-circle", label: "Anxious", color: "#FF6B6B" },
+  { emoji: "happy", icon: "smile", label: "Happy", color: Colors.light.success },
+  { emoji: "calm", icon: "coffee", label: "Calm", color: Colors.light.secondary },
+  { emoji: "neutral", icon: "meh", label: "Okay", color: Colors.light.warm },
+  { emoji: "sad", icon: "frown", label: "Sad", color: Colors.light.accent },
+  { emoji: "anxious", icon: "alert-circle", label: "Anxious", color: Colors.light.emergency },
 ];
 
 const activities = [
-  { id: "sleep", icon: "moon", label: "Sleep", value: "7.5h", target: "8h" },
-  { id: "steps", icon: "activity", label: "Steps", value: "6,234", target: "10k" },
-  { id: "water", icon: "droplet", label: "Water", value: "5", target: "8 cups" },
-  { id: "exercise", icon: "heart", label: "Exercise", value: "30m", target: "45m" },
-  { id: "meditate", icon: "sun", label: "Meditate", value: "10m", target: "15m" },
-  { id: "stress", icon: "zap", label: "Stress", value: "Low", target: "" },
+  { id: "sleep", icon: "moon", label: "Sleep", value: "7.5h", color: Colors.light.secondary },
+  { id: "steps", icon: "activity", label: "Steps", value: "6,234", color: Colors.light.success },
+  { id: "water", icon: "droplet", label: "Water", value: "5/8", color: Colors.light.secondary },
+  { id: "mood", icon: "heart", label: "Mood", value: "Good", color: Colors.light.primary },
 ];
 
 const quotes = [
@@ -45,8 +42,7 @@ const quotes = [
 const todoItems = [
   { id: "1", text: "Morning meditation", completed: true },
   { id: "2", text: "Take a 20-minute walk", completed: false },
-  { id: "3", text: "Drink 8 glasses of water", completed: false },
-  { id: "4", text: "Journal for 10 minutes", completed: false },
+  { id: "3", text: "Journal for 10 minutes", completed: false },
 ];
 
 export default function HomeScreen() {
@@ -59,6 +55,7 @@ export default function HomeScreen() {
 
   const today = new Date();
   const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
+  const dateString = today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
 
   const handleMoodSelect = (mood: string) => {
@@ -83,7 +80,7 @@ export default function HomeScreen() {
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
-        paddingTop: headerHeight + Spacing.lg,
+        paddingTop: headerHeight + Spacing.md,
         paddingBottom: tabBarHeight + Spacing["5xl"],
         paddingHorizontal: Spacing.lg,
       }}
@@ -91,24 +88,22 @@ export default function HomeScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.greetingSection}>
-        <ThemedText type="h2">{greeting}</ThemedText>
+        <ThemedText type="h1" style={styles.greeting}>{greeting}</ThemedText>
         <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          How are you feeling today?
+          {dateString}
         </ThemedText>
       </View>
 
-      <Card style={[styles.quoteCard, { backgroundColor: Colors.light.primary + "15" }]}>
-        <View style={styles.quoteIcon}>
-          <Feather name="sun" size={20} color={Colors.light.primary} />
-        </View>
+      <View style={[styles.quoteCard, { backgroundColor: Colors.light.warm + "25" }]}>
+        <View style={[styles.quoteAccent, { backgroundColor: Colors.light.accent }]} />
         <ThemedText type="body" style={styles.quoteText}>
           "{randomQuote}"
         </ThemedText>
-      </Card>
+      </View>
 
       <View style={styles.section}>
         <ThemedText type="h3" style={styles.sectionTitle}>
-          Today's Mood
+          How are you feeling?
         </ThemedText>
         <View style={styles.moodContainer}>
           {moods.map((mood) => (
@@ -121,22 +116,21 @@ export default function HomeScreen() {
                     selectedMood === mood.emoji
                       ? mood.color
                       : theme.backgroundDefault,
-                  borderColor:
-                    selectedMood === mood.emoji ? mood.color : "transparent",
                 },
+                selectedMood === mood.emoji && Shadows.small,
               ]}
               onPress={() => handleMoodSelect(mood.emoji)}
             >
               <Feather
                 name={mood.icon as any}
-                size={24}
-                color={selectedMood === mood.emoji ? "#FFF" : theme.text}
+                size={22}
+                color={selectedMood === mood.emoji ? "#FFF" : mood.color}
               />
               <ThemedText
                 type="small"
                 style={[
                   styles.moodLabel,
-                  selectedMood === mood.emoji && { color: "#FFF" },
+                  { color: selectedMood === mood.emoji ? "#FFF" : theme.textSecondary },
                 ]}
               >
                 {mood.label}
@@ -148,78 +142,57 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <ThemedText type="h3" style={styles.sectionTitle}>
-          Daily Activities
+          Daily Tracking
         </ThemedText>
         <View style={styles.activitiesGrid}>
           {activities.map((activity) => (
-            <Card
+            <Pressable
               key={activity.id}
-              style={[styles.activityCard, { backgroundColor: theme.backgroundDefault }]}
+              style={[styles.activityCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
             >
-              <View
-                style={[
-                  styles.activityIcon,
-                  { backgroundColor: Colors.light.primary + "20" },
-                ]}
-              >
-                <Feather
-                  name={activity.icon as any}
-                  size={18}
-                  color={Colors.light.primary}
-                />
+              <View style={[styles.activityIcon, { backgroundColor: activity.color + "20" }]}>
+                <Feather name={activity.icon as any} size={20} color={activity.color} />
               </View>
+              <ThemedText type="h4" style={styles.activityValue}>{activity.value}</ThemedText>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
                 {activity.label}
               </ThemedText>
-              <ThemedText type="h4">{activity.value}</ThemedText>
-              {activity.target ? (
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  / {activity.target}
-                </ThemedText>
-              ) : null}
-            </Card>
+            </Pressable>
           ))}
         </View>
       </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <ThemedText type="h3">To-Do List</ThemedText>
-          <Pressable>
-            <Feather name="plus" size={20} color={Colors.light.primary} />
+          <ThemedText type="h3">Today's Tasks</ThemedText>
+          <Pressable style={[styles.addButton, { backgroundColor: Colors.light.primary + "15" }]}>
+            <Feather name="plus" size={18} color={Colors.light.primary} />
           </Pressable>
         </View>
         <View style={styles.todoList}>
           {todos.map((todo) => (
             <Pressable
               key={todo.id}
-              style={[styles.todoItem, { backgroundColor: theme.backgroundDefault }]}
+              style={[styles.todoItem, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
               onPress={() => toggleTodo(todo.id)}
             >
               <View
                 style={[
                   styles.todoCheckbox,
                   {
-                    backgroundColor: todo.completed
-                      ? Colors.light.primary
-                      : "transparent",
-                    borderColor: todo.completed
-                      ? Colors.light.primary
-                      : theme.border,
+                    backgroundColor: todo.completed ? Colors.light.primary : "transparent",
+                    borderColor: todo.completed ? Colors.light.primary : theme.border,
                   },
                 ]}
               >
                 {todo.completed ? (
-                  <Feather name="check" size={14} color="#FFF" />
+                  <Feather name="check" size={12} color="#FFF" />
                 ) : null}
               </View>
               <ThemedText
                 style={[
                   styles.todoText,
-                  todo.completed && {
-                    textDecorationLine: "line-through",
-                    color: theme.textSecondary,
-                  },
+                  todo.completed && { textDecorationLine: "line-through", color: theme.textSecondary },
                 ]}
               >
                 {todo.text}
@@ -231,79 +204,56 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <ThemedText type="h3" style={styles.sectionTitle}>
-          Meal Planning
+          Meal Plan
         </ThemedText>
-        <Card style={[styles.mealCard, { backgroundColor: theme.backgroundDefault }]}>
-          <View style={styles.mealRow}>
-            <View style={styles.mealInfo}>
-              <View style={[styles.mealIcon, { backgroundColor: Colors.light.accent + "30" }]}>
-                <Feather name="sunrise" size={16} color={Colors.light.accent} />
-              </View>
-              <View>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Breakfast
-                </ThemedText>
-                <ThemedText type="body">Oatmeal with berries</ThemedText>
-              </View>
+        <View style={[styles.mealCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}>
+          <View style={styles.mealItem}>
+            <View style={[styles.mealIcon, { backgroundColor: Colors.light.accent + "20" }]}>
+              <Feather name="sunrise" size={16} color={Colors.light.accent} />
             </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              350 cal
-            </ThemedText>
+            <View style={styles.mealInfo}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>Breakfast</ThemedText>
+              <ThemedText type="body">Oatmeal with berries</ThemedText>
+            </View>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>350 cal</ThemedText>
           </View>
           <View style={[styles.mealDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.mealRow}>
-            <View style={styles.mealInfo}>
-              <View style={[styles.mealIcon, { backgroundColor: Colors.light.primary + "30" }]}>
-                <Feather name="sun" size={16} color={Colors.light.primary} />
-              </View>
-              <View>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Lunch
-                </ThemedText>
-                <ThemedText type="body">Grilled chicken salad</ThemedText>
-              </View>
+          <View style={styles.mealItem}>
+            <View style={[styles.mealIcon, { backgroundColor: Colors.light.secondary + "20" }]}>
+              <Feather name="sun" size={16} color={Colors.light.secondary} />
             </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              480 cal
-            </ThemedText>
+            <View style={styles.mealInfo}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>Lunch</ThemedText>
+              <ThemedText type="body">Grilled chicken salad</ThemedText>
+            </View>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>480 cal</ThemedText>
           </View>
           <View style={[styles.mealDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.mealRow}>
-            <View style={styles.mealInfo}>
-              <View style={[styles.mealIcon, { backgroundColor: Colors.light.secondary + "30" }]}>
-                <Feather name="moon" size={16} color={Colors.light.secondary} />
-              </View>
-              <View>
-                <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                  Dinner
-                </ThemedText>
-                <ThemedText type="body">Salmon with vegetables</ThemedText>
-              </View>
+          <View style={styles.mealItem}>
+            <View style={[styles.mealIcon, { backgroundColor: Colors.light.primary + "20" }]}>
+              <Feather name="moon" size={16} color={Colors.light.primary} />
             </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              520 cal
-            </ThemedText>
+            <View style={styles.mealInfo}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>Dinner</ThemedText>
+              <ThemedText type="body">Salmon with vegetables</ThemedText>
+            </View>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>520 cal</ThemedText>
           </View>
-        </Card>
+        </View>
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          Daily Streak
-        </ThemedText>
-        <Card style={[styles.streakCard, { backgroundColor: Colors.light.accent + "20" }]}>
-          <View style={styles.streakContent}>
-            <View style={[styles.streakIcon, { backgroundColor: Colors.light.accent }]}>
-              <Feather name="award" size={24} color="#FFF" />
-            </View>
-            <View style={styles.streakInfo}>
-              <ThemedText type="h2">7 Days</ThemedText>
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>
-                You're on a roll! Keep it up.
-              </ThemedText>
-            </View>
+        <View style={[styles.streakCard, { backgroundColor: Colors.light.primary + "12" }]}>
+          <View style={[styles.streakIcon, { backgroundColor: Colors.light.primary }]}>
+            <Feather name="zap" size={24} color="#FFF" />
           </View>
-        </Card>
+          <View style={styles.streakInfo}>
+            <ThemedText type="h2" style={{ color: Colors.light.primary }}>7 Days</ThemedText>
+            <ThemedText type="body" style={{ color: theme.textSecondary }}>
+              Amazing streak! Keep going.
+            </ThemedText>
+          </View>
+        </View>
       </View>
     </ScrollView>
   );
@@ -316,24 +266,25 @@ const styles = StyleSheet.create({
   greetingSection: {
     marginBottom: Spacing.xl,
   },
+  greeting: {
+    marginBottom: Spacing.xs,
+  },
   quoteCard: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    overflow: "hidden",
   },
-  quoteIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.light.primary + "30",
-    alignItems: "center",
-    justifyContent: "center",
+  quoteAccent: {
+    width: 4,
+    borderRadius: 2,
+    marginRight: Spacing.md,
   },
   quoteText: {
     flex: 1,
     fontStyle: "italic",
+    lineHeight: 24,
   },
   section: {
     marginBottom: Spacing.xl,
@@ -347,17 +298,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
+  addButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   moodContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: Spacing.sm,
   },
   moodButton: {
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 2,
     flex: 1,
-    marginHorizontal: Spacing.xs,
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.lg,
   },
   moodLabel: {
     marginTop: Spacing.xs,
@@ -366,21 +324,24 @@ const styles = StyleSheet.create({
   activitiesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   activityCard: {
-    width: "31%",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    width: "47%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    alignItems: "flex-start",
   },
   activityIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.sm,
+  },
+  activityValue: {
+    marginBottom: Spacing.xs,
   },
   todoList: {
     gap: Spacing.sm,
@@ -388,14 +349,14 @@ const styles = StyleSheet.create({
   todoItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
     gap: Spacing.md,
   },
   todoCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
@@ -404,37 +365,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mealCard: {
-    padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
   },
-  mealRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  mealInfo: {
+  mealItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.md,
   },
   mealIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: Spacing.md,
+  },
+  mealInfo: {
+    flex: 1,
   },
   mealDivider: {
     height: 1,
     marginVertical: Spacing.md,
   },
   streakCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  streakContent: {
     flexDirection: "row",
     alignItems: "center",
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.xl,
     gap: Spacing.lg,
   },
   streakIcon: {

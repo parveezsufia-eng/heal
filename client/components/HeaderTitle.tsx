@@ -31,12 +31,12 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     marginRight: Spacing.sm,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: "700",
-    fontFamily: "Nunito_700Bold",
+    fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.light.primary,
   },
 });

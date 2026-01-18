@@ -9,13 +9,14 @@ import Animated, {
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { BorderRadius, Spacing } from "@/constants/theme";
+import { BorderRadius, Spacing, Colors, Shadows } from "@/constants/theme";
 
 interface ButtonProps {
   onPress?: () => void;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
+  variant?: "primary" | "secondary" | "outline";
 }
 
 const springConfig: WithSpringConfig = {
@@ -33,6 +34,7 @@ export function Button({
   children,
   style,
   disabled = false,
+  variant = "primary",
 }: ButtonProps) {
   const { theme } = useTheme();
   const scale = useSharedValue(1);
@@ -43,13 +45,37 @@ export function Button({
 
   const handlePressIn = () => {
     if (!disabled) {
-      scale.value = withSpring(0.98, springConfig);
+      scale.value = withSpring(0.97, springConfig);
     }
   };
 
   const handlePressOut = () => {
     if (!disabled) {
       scale.value = withSpring(1, springConfig);
+    }
+  };
+
+  const getBackgroundColor = () => {
+    if (disabled) return theme.border;
+    switch (variant) {
+      case "primary":
+        return Colors.light.primary;
+      case "secondary":
+        return Colors.light.secondary;
+      case "outline":
+        return "transparent";
+      default:
+        return Colors.light.primary;
+    }
+  };
+
+  const getTextColor = () => {
+    if (disabled) return theme.textSecondary;
+    switch (variant) {
+      case "outline":
+        return Colors.light.primary;
+      default:
+        return "#FFFFFF";
     }
   };
 
@@ -62,16 +88,18 @@ export function Button({
       style={[
         styles.button,
         {
-          backgroundColor: theme.link,
-          opacity: disabled ? 0.5 : 1,
+          backgroundColor: getBackgroundColor(),
+          borderColor: variant === "outline" ? Colors.light.primary : "transparent",
+          borderWidth: variant === "outline" ? 1.5 : 0,
         },
+        variant === "primary" && !disabled && Shadows.small,
         style,
         animatedStyle,
       ]}
     >
       <ThemedText
         type="body"
-        style={[styles.buttonText, { color: theme.buttonText }]}
+        style={[styles.buttonText, { color: getTextColor() }]}
       >
         {children}
       </ThemedText>
@@ -82,11 +110,13 @@ export function Button({
 const styles = StyleSheet.create({
   button: {
     height: Spacing.buttonHeight,
-    borderRadius: BorderRadius.full,
+    borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonText: {
     fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontSize: 16,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Linking, Modal, TextInput, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Linking, Modal, TextInput, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -29,7 +29,7 @@ export function FloatingButtons() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; message: string }[]>([
-    { role: "ai", message: "Hello! I'm here to support you. How are you feeling today?" },
+    { role: "ai", message: "Hi there! I'm your AI companion. How are you feeling today?" },
   ]);
 
   const emergencyScale = useSharedValue(1);
@@ -66,11 +66,11 @@ export function FloatingButtons() {
 
     setTimeout(() => {
       const responses = [
-        "I understand how you're feeling. Remember, it's okay to take things one step at a time.",
-        "Thank you for sharing that with me. Your feelings are valid.",
-        "I'm here for you. Would you like to try a breathing exercise?",
-        "That sounds challenging. Remember to be kind to yourself.",
-        "It takes courage to express your feelings. I'm proud of you.",
+        "I understand. It's completely valid to feel that way. Would you like to talk more about it?",
+        "Thank you for sharing. Remember, every step you take towards wellness matters.",
+        "I'm here to listen. Take your time, there's no rush.",
+        "That sounds challenging. Would you like me to suggest some calming techniques?",
+        "Your feelings are important. Let's work through this together.",
       ];
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       setChatHistory((prev) => [...prev, { role: "ai", message: randomResponse }]);
@@ -99,7 +99,7 @@ export function FloatingButtons() {
             emergencyScale.value = withSpring(1, springConfig);
           }}
         >
-          <Feather name="phone" size={20} color="#FFF" />
+          <Feather name="phone" size={18} color="#FFF" />
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -130,14 +130,14 @@ export function FloatingButtons() {
         <View style={styles.modalOverlay}>
           <View style={[styles.emergencyModalContent, { backgroundColor: theme.backgroundDefault }]}>
             <View style={styles.emergencyHeader}>
-              <View style={[styles.emergencyIconContainer, { backgroundColor: Colors.light.emergency + "20" }]}>
-                <Feather name="alert-circle" size={32} color={Colors.light.emergency} />
+              <View style={[styles.emergencyIconContainer, { backgroundColor: Colors.light.emergency + "15" }]}>
+                <Feather name="heart" size={32} color={Colors.light.emergency} />
               </View>
               <ThemedText type="h2" style={styles.emergencyTitle}>
-                Emergency Support
+                You're Not Alone
               </ThemedText>
               <ThemedText type="body" style={[styles.emergencySubtitle, { color: theme.textSecondary }]}>
-                You're not alone. Help is available.
+                Help is available 24/7. Reach out now.
               </ThemedText>
             </View>
 
@@ -146,16 +146,16 @@ export function FloatingButtons() {
               onPress={callHelpline}
             >
               <Feather name="phone-call" size={20} color="#FFF" />
-              <ThemedText style={styles.helplineText}>Call 988 Suicide & Crisis Lifeline</ThemedText>
+              <ThemedText style={styles.helplineText}>Call 988 Crisis Lifeline</ThemedText>
             </Pressable>
 
             <View style={styles.emergencyOptions}>
               <Pressable style={[styles.emergencyOption, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="message-square" size={20} color={Colors.light.primary} />
+                <Feather name="message-square" size={18} color={Colors.light.primary} />
                 <ThemedText type="small">Text HOME to 741741</ThemedText>
               </Pressable>
               <Pressable style={[styles.emergencyOption, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="globe" size={20} color={Colors.light.primary} />
+                <Feather name="globe" size={18} color={Colors.light.primary} />
                 <ThemedText type="small">International Resources</ThemedText>
               </Pressable>
             </View>
@@ -181,19 +181,19 @@ export function FloatingButtons() {
             <View style={[styles.chatHeader, { backgroundColor: Colors.light.primary }]}>
               <View style={styles.chatHeaderLeft}>
                 <View style={styles.chatAvatar}>
-                  <Feather name="heart" size={20} color={Colors.light.primary} />
+                  <Feather name="heart" size={18} color={Colors.light.primary} />
                 </View>
                 <View>
-                  <ThemedText style={styles.chatHeaderTitle}>Heal Here Assistant</ThemedText>
+                  <ThemedText style={styles.chatHeaderTitle}>AI Companion</ThemedText>
                   <ThemedText style={styles.chatHeaderSubtitle}>Always here for you</ThemedText>
                 </View>
               </View>
-              <Pressable onPress={() => setShowChatModal(false)}>
+              <Pressable onPress={() => setShowChatModal(false)} style={styles.chatCloseButton}>
                 <Feather name="x" size={24} color="#FFF" />
               </Pressable>
             </View>
 
-            <View style={styles.chatMessages}>
+            <ScrollView style={styles.chatMessages} contentContainerStyle={styles.chatMessagesContent}>
               {chatHistory.map((chat, index) => (
                 <View
                   key={index}
@@ -214,11 +214,11 @@ export function FloatingButtons() {
                   </ThemedText>
                 </View>
               ))}
-            </View>
+            </ScrollView>
 
-            <View style={[styles.chatInputContainer, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={[styles.chatInputContainer, { backgroundColor: theme.backgroundDefault, borderTopColor: theme.border }]}>
               <TextInput
-                style={[styles.chatInput, { color: theme.text }]}
+                style={[styles.chatInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
                 placeholder="Type your message..."
                 placeholderTextColor={theme.textSecondary}
                 value={chatMessage}
@@ -242,7 +242,7 @@ export function FloatingButtons() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    right: Spacing.lg,
+    right: Spacing.xl,
     gap: Spacing.md,
     zIndex: 1000,
   },
@@ -262,14 +262,14 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(52,50,50,0.6)",
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.xl,
   },
   emergencyModalContent: {
     width: "100%",
-    maxWidth: 340,
+    maxWidth: 360,
     borderRadius: BorderRadius.xl,
     padding: Spacing["2xl"],
   },
@@ -278,9 +278,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   emergencyIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.lg,
@@ -298,12 +298,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: Spacing.sm,
     paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
   },
   helplineText: {
     color: "#FFF",
     fontWeight: "600",
+    fontSize: 15,
   },
   emergencyOptions: {
     gap: Spacing.sm,
@@ -320,14 +321,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.md,
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
   },
   chatModalContainer: {
     flex: 1,
     justifyContent: "flex-end",
   },
   chatModalContent: {
-    height: "85%",
+    height: "90%",
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     overflow: "hidden",
@@ -356,20 +357,28 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "600",
     fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   chatHeaderSubtitle: {
     color: "rgba(255,255,255,0.8)",
     fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  chatCloseButton: {
+    padding: Spacing.xs,
   },
   chatMessages: {
     flex: 1,
+  },
+  chatMessagesContent: {
     padding: Spacing.lg,
     gap: Spacing.md,
   },
   chatBubble: {
     maxWidth: "80%",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
   },
   userBubble: {
     alignSelf: "flex-end",
@@ -388,19 +397,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: Spacing.md,
     gap: Spacing.sm,
+    borderTopWidth: 1,
   },
   chatInput: {
     flex: 1,
-    height: 44,
+    height: 48,
     paddingHorizontal: Spacing.lg,
-    borderRadius: 22,
-    backgroundColor: "rgba(0,0,0,0.05)",
+    borderRadius: BorderRadius.full,
     fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
