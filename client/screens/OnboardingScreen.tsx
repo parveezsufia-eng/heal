@@ -105,7 +105,7 @@ export default function OnboardingScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.light.warm }]}>
+    <View style={[styles.container, { backgroundColor: "#FFFFFF" }]}>
       <DecorativeElements />
       
       <View style={[styles.skipContainer, { paddingTop: insets.top + Spacing.md }]}>
