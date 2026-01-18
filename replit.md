@@ -2,7 +2,7 @@
 
 ## Overview
 
-Heal Here is a React Native/Expo mental health and wellness companion application. It provides therapy access, mood tracking, wellness tools, and AI-powered support for users seeking mental health guidance. The app follows a warm, sophisticated pastel aesthetic with a minimalist approach designed to feel like a safe, peaceful sanctuary.
+Heal Here is a React Native/Expo mental health and wellness companion application. It provides therapy access, mood tracking, wellness tools, and AI-powered support for users seeking mental health guidance. The app follows a clean, minimal, serene wellness aesthetic with line art illustrations and soft organic shapes, designed to feel like a peaceful, spa-like sanctuary.
 
 The project uses a monorepo structure with:
 - **Client**: Expo/React Native mobile app (iOS, Android, Web)
@@ -12,6 +12,15 @@ The project uses a monorepo structure with:
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Changes (January 2026)
+
+- Complete design overhaul to match Dribbble reference design
+- Added Playfair Display serif font for elegant headings
+- Generated custom line art illustrations with colored organic blobs
+- Updated color palette to warm gold, soft blue, and peach tones
+- Redesigned all screens with minimal, clean aesthetic
+- Updated onboarding with decorative elements and circular arrow button
 
 ## System Architecture
 
@@ -29,7 +38,8 @@ Preferred communication style: Simple, everyday language.
 
 **UI Components**:
 - Custom themed components (ThemedText, ThemedView, Card, Button)
-- Plus Jakarta Sans font family
+- Playfair Display (serif) for headings
+- Plus Jakarta Sans (sans-serif) for body text
 - Reanimated for animations with spring physics
 - Platform-specific adaptations (iOS blur effects, Android material design)
 
@@ -70,13 +80,37 @@ Preferred communication style: Simple, everyday language.
 
 ### Design System
 
-Colors follow a warm pastel palette:
-- Primary Purple: `#9B65AA`
-- Soft Blue: `#AFCCE1`
-- Warm Amber: `#DA914A`
-- Background Root: `#F2F1F0` (light) / `#1A1919` (dark)
+**Color Palette** (based on Dribbble reference):
+- Primary Gold: `#C9A77C` - Buttons, accents
+- Soft Blue: `#AFCCE1` - Secondary accents
+- Peach/Cream: `#F5E6DC` - Decorative backgrounds
+- Background Root: `#FFFFFF` (light) / `#1A1A1A` (dark)
+- Card Blue: `#E8F4FA`
+- Card Peach: `#FDF3ED`
+- Card Green: `#EDF7F4`
+- Text: `#2D2D2D` (primary), `#8B8B8B` (secondary)
+- Emergency: `#E85D5D`
+
+**Typography**:
+- Headings: Playfair Display (serif) - elegant, spa-like feel
+- Body: Plus Jakarta Sans (sans-serif) - clean, modern
+
+**Illustrations**:
+- Line art style with single continuous black lines
+- Soft colored organic blobs (peach, blue, amber)
+- Located in `client/assets/images/`
 
 Supports automatic light/dark theme switching.
+
+## Key Features
+
+- **Onboarding**: Beautiful loading page with line art illustration and decorative elements
+- **Home**: Mood tracker, daily goals, schedule, breathing exercises
+- **Explore**: Session cards, mentor listings, category filters
+- **Journal**: PIN-protected (PIN: 1234), private entries
+- **Therapist**: Find and book therapy sessions, filter by specialty
+- **Profile**: Stats, weekly mood chart, achievements, progress tracking
+- **Floating Buttons**: AI chat companion and emergency SOS on all screens
 
 ## External Dependencies
 
@@ -97,6 +131,10 @@ Supports automatic light/dark theme switching.
 - `@react-navigation/native` - Core navigation
 - `@react-navigation/bottom-tabs` - Tab navigator
 - `@react-navigation/native-stack` - Stack navigator
+
+**Fonts**:
+- `@expo-google-fonts/plus-jakarta-sans` - Body text
+- `@expo-google-fonts/playfair-display` - Headings
 
 **Data**:
 - `@tanstack/react-query` - Server state management
