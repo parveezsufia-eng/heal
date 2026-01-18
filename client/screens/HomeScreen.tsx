@@ -82,7 +82,6 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <FloatingButtons />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{
@@ -94,16 +93,18 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-        <View>
-          <ThemedText style={styles.greeting}>{greeting}</ThemedText>
-          <ThemedText style={styles.headerTitle}>
-            Ready to start{"\n"}your goals?
-          </ThemedText>
+          <View>
+            <ThemedText style={styles.greeting}>{greeting}</ThemedText>
+            <ThemedText style={styles.headerTitle}>
+              Ready to start{"\n"}your goals?
+            </ThemedText>
+          </View>
+          <View style={styles.headerActions}>
+            <Pressable style={styles.searchButton}>
+              <Feather name="search" size={22} color={theme.text} />
+            </Pressable>
+          </View>
         </View>
-        <Pressable style={styles.searchButton}>
-          <Feather name="search" size={22} color={theme.text} />
-        </Pressable>
-      </View>
 
       <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>How are you feeling?</ThemedText>
@@ -209,6 +210,7 @@ export default function HomeScreen() {
         </View>
       </View>
       </ScrollView>
+      <FloatingButtons />
     </View>
   );
 }
@@ -225,6 +227,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: Spacing["2xl"],
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
   },
   greeting: {
     fontSize: 13,
