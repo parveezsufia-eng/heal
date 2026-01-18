@@ -16,21 +16,19 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
-import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { TherapistStackParamList } from "@/navigation/TherapistStackNavigator";
 
 type TherapistNavigationProp = NativeStackNavigationProp<TherapistStackParamList>;
 
-const counselingTypes = ["All", "Family", "Relationship", "Burnout", "Academic", "Teenage", "Corporate"];
+const counselingTypes = ["All", "Anxiety", "Depression", "Relationship", "Stress", "Burnout"];
 
 interface Therapist {
   id: string;
   name: string;
   title: string;
   specialties: string[];
-  experience: string;
   rating: number;
   reviews: number;
   price: string;
@@ -38,10 +36,9 @@ interface Therapist {
 }
 
 const therapists: Therapist[] = [
-  { id: "1", name: "Dr. Emily Watson", title: "Clinical Psychologist", specialties: ["Anxiety", "Depression"], experience: "15 years", rating: 4.9, reviews: 234, price: "$80-120", available: true },
-  { id: "2", name: "Dr. Michael Chen", title: "Licensed Counselor", specialties: ["Burnout", "Corporate"], experience: "10 years", rating: 4.8, reviews: 189, price: "$70-100", available: true },
-  { id: "3", name: "Dr. Sarah Johnson", title: "Family Therapist", specialties: ["Family", "Teenage"], experience: "12 years", rating: 4.9, reviews: 312, price: "$90-130", available: false },
-  { id: "4", name: "Dr. David Miller", title: "Psychiatrist", specialties: ["Academic", "Anxiety"], experience: "20 years", rating: 4.7, reviews: 445, price: "$100-150", available: true },
+  { id: "1", name: "Dr. Emily Watson", title: "Clinical Psychologist", specialties: ["Anxiety", "Depression"], rating: 4.9, reviews: 234, price: "$80", available: true },
+  { id: "2", name: "Dr. Michael Chen", title: "Licensed Counselor", specialties: ["Stress", "Burnout"], rating: 4.8, reviews: 189, price: "$70", available: true },
+  { id: "3", name: "Dr. Sarah Johnson", title: "Family Therapist", specialties: ["Relationship"], rating: 4.9, reviews: 312, price: "$90", available: false },
 ];
 
 export default function TherapistScreen() {
@@ -57,95 +54,137 @@ export default function TherapistScreen() {
     setSelectedType(type);
   };
 
-  const handleTherapistPress = (therapistId: string) => {
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("TherapistDetail", { therapistId });
-  };
-
-  const filteredTherapists = selectedType === "All" ? therapists : therapists.filter((t) => t.specialties.some((s) => s.toLowerCase().includes(selectedType.toLowerCase())));
+  const filteredTherapists = selectedType === "All"
+    ? therapists
+    : therapists.filter((t) => t.specialties.some((s) => s === selectedType));
 
   const renderTherapist = ({ item }: { item: Therapist }) => (
-    <Pressable onPress={() => handleTherapistPress(item.id)}>
-      <View style={[styles.therapistCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}>
+    <Pressable onPress={() => navigation.navigate("TherapistDetail", { therapistId: item.id })}>
+      <View style={[styles.therapistCard, { backgroundColor: theme.backgroundSecondary }]}>
         <View style={styles.therapistHeader}>
-          <View style={[styles.avatar, { backgroundColor: Colors.light.warm + "40" }]}>
-            <Feather name="user" size={26} color={Colors.light.primary} />
+          <View style={[styles.avatar, { backgroundColor: Colors.light.cardPeach }]}>
+            <Feather name="user" size={24} color={Colors.light.primary} />
           </View>
           <View style={styles.therapistInfo}>
             <View style={styles.nameRow}>
-              <ThemedText type="h4">{item.name}</ThemedText>
+              <ThemedText style={styles.therapistName}>{item.name}</ThemedText>
               {item.available ? (
-                <View style={[styles.availableBadge, { backgroundColor: Colors.light.success + "20" }]}>
-                  <View style={[styles.availableDot, { backgroundColor: Colors.light.success }]} />
-                </View>
+                <View style={[styles.availableDot, { backgroundColor: Colors.light.success }]} />
               ) : null}
             </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>{item.title}</ThemedText>
+            <ThemedText style={[styles.therapistTitle, { color: theme.textSecondary }]}>
+              {item.title}
+            </ThemedText>
           </View>
         </View>
-        <View style={styles.specialtiesContainer}>
+        <View style={styles.specialtiesRow}>
           {item.specialties.map((specialty, index) => (
-            <View key={index} style={[styles.specialtyTag, { backgroundColor: Colors.light.secondary + "15" }]}>
-              <ThemedText type="small" style={{ color: Colors.light.secondary, fontWeight: "500" }}>{specialty}</ThemedText>
+            <View key={index} style={[styles.specialtyTag, { backgroundColor: Colors.light.cardBlue }]}>
+              <ThemedText style={styles.specialtyText}>{specialty}</ThemedText>
             </View>
           ))}
         </View>
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Feather name="star" size={14} color={Colors.light.accent} />
-            <ThemedText type="small" style={{ fontWeight: "600" }}>{item.rating}</ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>({item.reviews})</ThemedText>
-          </View>
-          <View style={styles.stat}>
-            <Feather name="briefcase" size={14} color={theme.textSecondary} />
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>{item.experience}</ThemedText>
-          </View>
-        </View>
         <View style={styles.cardFooter}>
-          <View>
-            <ThemedText type="h4" style={{ color: Colors.light.primary }}>{item.price}</ThemedText>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>per session</ThemedText>
-          </View>
-          <Pressable style={[styles.bookBtn, { backgroundColor: item.available ? Colors.light.primary : theme.border }]} disabled={!item.available}>
-            <ThemedText type="small" style={{ color: item.available ? "#FFF" : theme.textSecondary, fontWeight: "600" }}>
-              {item.available ? "Book" : "Unavailable"}
+          <View style={styles.ratingRow}>
+            <Feather name="star" size={14} color={Colors.light.primary} />
+            <ThemedText style={styles.ratingText}>{item.rating}</ThemedText>
+            <ThemedText style={[styles.reviewsText, { color: theme.textSecondary }]}>
+              ({item.reviews} reviews)
             </ThemedText>
-          </Pressable>
+          </View>
+          <View style={styles.priceRow}>
+            <ThemedText style={styles.priceText}>{item.price}</ThemedText>
+            <ThemedText style={[styles.priceLabel, { color: theme.textSecondary }]}>/session</ThemedText>
+          </View>
         </View>
+        <Pressable
+          style={[
+            styles.bookButton,
+            { backgroundColor: item.available ? Colors.light.primary : theme.border },
+          ]}
+          disabled={!item.available}
+        >
+          <ThemedText style={[styles.bookButtonText, { color: item.available ? "#FFF" : theme.textSecondary }]}>
+            {item.available ? "Book Session" : "Unavailable"}
+          </ThemedText>
+        </Pressable>
       </View>
     </Pressable>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.typesContainer, { paddingTop: headerHeight + Spacing.md }]}>
+      <View style={[styles.header, { paddingTop: headerHeight + Spacing.md }]}>
+        <ThemedText style={styles.headerTitle}>Find Therapist</ThemedText>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.typesContainer}
+      >
         {counselingTypes.map((type) => (
-          <Pressable key={type} style={[styles.typeChip, { backgroundColor: selectedType === type ? Colors.light.primary : theme.backgroundDefault }]} onPress={() => handleTypePress(type)}>
-            <ThemedText type="small" style={[styles.typeLabel, { color: selectedType === type ? "#FFF" : theme.text }]}>{type}</ThemedText>
+          <Pressable
+            key={type}
+            style={[
+              styles.typePill,
+              selectedType === type && styles.typePillSelected,
+            ]}
+            onPress={() => handleTypePress(type)}
+          >
+            <ThemedText
+              style={[
+                styles.typeText,
+                selectedType === type && styles.typeTextSelected,
+              ]}
+            >
+              {type}
+            </ThemedText>
           </Pressable>
         ))}
       </ScrollView>
-      <FlatList data={filteredTherapists} renderItem={renderTherapist} keyExtractor={(item) => item.id} contentContainerStyle={{ paddingHorizontal: Spacing.lg, paddingBottom: tabBarHeight + Spacing["5xl"] }} scrollIndicatorInsets={{ bottom: insets.bottom }} showsVerticalScrollIndicator={false} ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />} />
+      <FlatList
+        data={filteredTherapists}
+        renderItem={renderTherapist}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          paddingHorizontal: Spacing.xl,
+          paddingBottom: tabBarHeight + Spacing["5xl"],
+        }}
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  typesContainer: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.lg, gap: Spacing.sm },
-  typeChip: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, marginRight: Spacing.sm },
-  typeLabel: { fontWeight: "600", fontFamily: "PlusJakartaSans_600SemiBold" },
-  therapistCard: { padding: Spacing.lg, borderRadius: BorderRadius.lg },
+  header: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.md },
+  headerTitle: { fontSize: 28, fontFamily: "PlayfairDisplay_400Regular", color: Colors.light.text },
+  typesContainer: { paddingHorizontal: Spacing.xl, paddingBottom: Spacing.xl, gap: Spacing.sm },
+  typePill: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, backgroundColor: Colors.light.backgroundSecondary, marginRight: Spacing.sm },
+  typePillSelected: { backgroundColor: Colors.light.text },
+  typeText: { fontSize: 14, fontFamily: "PlusJakartaSans_500Medium", color: Colors.light.text },
+  typeTextSelected: { color: "#FFFFFF" },
+  therapistCard: { padding: Spacing.lg, borderRadius: BorderRadius.xl },
   therapistHeader: { flexDirection: "row", marginBottom: Spacing.md },
   avatar: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
   therapistInfo: { flex: 1, marginLeft: Spacing.md, justifyContent: "center" },
   nameRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
-  availableBadge: { width: 18, height: 18, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  therapistName: { fontSize: 17, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  therapistTitle: { fontSize: 13, fontFamily: "PlusJakartaSans_400Regular" },
   availableDot: { width: 8, height: 8, borderRadius: 4 },
-  specialtiesContainer: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm, marginBottom: Spacing.md },
+  specialtiesRow: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.md },
   specialtyTag: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs, borderRadius: BorderRadius.sm },
-  statsRow: { flexDirection: "row", gap: Spacing.xl, marginBottom: Spacing.md },
-  stat: { flexDirection: "row", alignItems: "center", gap: Spacing.xs },
-  cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  bookBtn: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: BorderRadius.lg },
+  specialtyText: { fontSize: 12, fontFamily: "PlusJakartaSans_500Medium", color: Colors.light.secondary },
+  cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.md },
+  ratingRow: { flexDirection: "row", alignItems: "center", gap: Spacing.xs },
+  ratingText: { fontSize: 14, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  reviewsText: { fontSize: 13, fontFamily: "PlusJakartaSans_400Regular" },
+  priceRow: { flexDirection: "row", alignItems: "baseline" },
+  priceText: { fontSize: 18, fontFamily: "PlusJakartaSans_700Bold", color: Colors.light.text },
+  priceLabel: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
+  bookButton: { paddingVertical: Spacing.md, borderRadius: BorderRadius.lg, alignItems: "center" },
+  bookButtonText: { fontSize: 14, fontFamily: "PlusJakartaSans_600SemiBold" },
 });

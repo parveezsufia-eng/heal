@@ -28,8 +28,8 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={{
-        tabBarActiveTintColor: Colors.light.primary,
-        tabBarInactiveTintColor: theme.tabIconDefault,
+        tabBarActiveTintColor: Colors.light.text,
+        tabBarInactiveTintColor: Colors.light.tabIconDefault,
         tabBarStyle: {
           position: "absolute",
           backgroundColor: Platform.select({
@@ -67,11 +67,7 @@ export default function MainTabNavigator() {
         component={HomeStackNavigator}
         options={{
           title: "Home",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Feather name="home" size={22} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
         }}
       />
       <Tab.Screen
@@ -79,11 +75,7 @@ export default function MainTabNavigator() {
         component={ExploreStackNavigator}
         options={{
           title: "Explore",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Feather name="compass" size={22} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Feather name="compass" size={22} color={color} />,
         }}
       />
       <Tab.Screen
@@ -91,11 +83,7 @@ export default function MainTabNavigator() {
         component={JournalStackNavigator}
         options={{
           title: "Journal",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Feather name="book-open" size={22} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Feather name="book-open" size={22} color={color} />,
         }}
       />
       <Tab.Screen
@@ -103,11 +91,7 @@ export default function MainTabNavigator() {
         component={TherapistStackNavigator}
         options={{
           title: "Therapist",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Feather name="users" size={22} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
         }}
       />
       <Tab.Screen
@@ -115,19 +99,9 @@ export default function MainTabNavigator() {
         component={ProfileStackNavigator}
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIcon : undefined}>
-              <Feather name="user" size={22} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color }) => <Feather name="user" size={22} color={color} />,
         }}
       />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  activeIcon: {
-    transform: [{ scale: 1.05 }],
-  },
-});

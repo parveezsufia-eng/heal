@@ -10,39 +10,44 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 const moods = [
-  { emoji: "happy", icon: "smile", label: "Happy", color: Colors.light.success },
-  { emoji: "calm", icon: "coffee", label: "Calm", color: Colors.light.secondary },
-  { emoji: "neutral", icon: "meh", label: "Okay", color: Colors.light.warm },
-  { emoji: "sad", icon: "frown", label: "Sad", color: Colors.light.accent },
-  { emoji: "anxious", icon: "alert-circle", label: "Anxious", color: Colors.light.emergency },
+  { id: "happy", icon: "smile", label: "Happy" },
+  { id: "calm", icon: "coffee", label: "Calm" },
+  { id: "neutral", icon: "meh", label: "Okay" },
+  { id: "sad", icon: "frown", label: "Sad" },
+  { id: "anxious", icon: "alert-circle", label: "Anxious" },
 ];
 
-const activities = [
-  { id: "sleep", icon: "moon", label: "Sleep", value: "7.5h", color: Colors.light.secondary },
-  { id: "steps", icon: "activity", label: "Steps", value: "6,234", color: Colors.light.success },
-  { id: "water", icon: "droplet", label: "Water", value: "5/8", color: Colors.light.secondary },
-  { id: "mood", icon: "heart", label: "Mood", value: "Good", color: Colors.light.primary },
+const goalCards = [
+  {
+    id: "breathing",
+    title: "Breathing",
+    sessions: "7 sessions",
+    duration: "8-10 Minutes",
+    image: require("../assets/images/line_art_breathing_faces_illustration.png"),
+    bgColor: Colors.light.cardBlue,
+  },
+  {
+    id: "meditation",
+    title: "Meditation",
+    sessions: "5 sessions",
+    duration: "10-15 Minutes",
+    image: require("../assets/images/line_art_supportive_hands_illustration.png"),
+    bgColor: Colors.light.cardPeach,
+  },
 ];
 
-const quotes = [
-  "Every day is a fresh start. Embrace it with open arms.",
-  "You are stronger than you think, braver than you believe.",
-  "Small steps every day lead to big changes.",
-  "Be gentle with yourself. You're doing the best you can.",
-];
-
-const todoItems = [
-  { id: "1", text: "Morning meditation", completed: true },
-  { id: "2", text: "Take a 20-minute walk", completed: false },
-  { id: "3", text: "Journal for 10 minutes", completed: false },
+const dailyTasks = [
+  { id: "1", text: "Morning meditation", completed: true, time: "8:00 AM" },
+  { id: "2", text: "Breathing exercise", completed: false, time: "12:00 PM" },
+  { id: "3", text: "Evening journaling", completed: false, time: "8:00 PM" },
 ];
 
 export default function HomeScreen() {
@@ -51,30 +56,28 @@ export default function HomeScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [todos, setTodos] = useState(todoItems);
+  const [tasks, setTasks] = useState(dailyTasks);
 
-  const today = new Date();
-  const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
-  const dateString = today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-
-  const handleMoodSelect = (mood: string) => {
+  const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setSelectedMood(mood);
+    setSelectedMood(moodId);
   };
 
-  const toggleTodo = (id: string) => {
+  const toggleTask = (id: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setTodos(prev =>
-      prev.map(todo =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
   };
+
+  const today = new Date();
+  const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
 
   return (
     <ScrollView
@@ -82,81 +85,40 @@ export default function HomeScreen() {
       contentContainerStyle={{
         paddingTop: headerHeight + Spacing.md,
         paddingBottom: tabBarHeight + Spacing["5xl"],
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: Spacing.xl,
       }}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.greetingSection}>
-        <ThemedText type="h1" style={styles.greeting}>{greeting}</ThemedText>
-        <ThemedText type="body" style={{ color: theme.textSecondary }}>
-          {dateString}
-        </ThemedText>
-      </View>
-
-      <View style={[styles.quoteCard, { backgroundColor: Colors.light.warm + "25" }]}>
-        <View style={[styles.quoteAccent, { backgroundColor: Colors.light.accent }]} />
-        <ThemedText type="body" style={styles.quoteText}>
-          "{randomQuote}"
-        </ThemedText>
+      <View style={styles.header}>
+        <View>
+          <ThemedText style={styles.greeting}>{greeting}</ThemedText>
+          <ThemedText style={styles.headerTitle}>
+            Ready to start{"\n"}your goals?
+          </ThemedText>
+        </View>
+        <Pressable style={styles.searchButton}>
+          <Feather name="search" size={22} color={theme.text} />
+        </Pressable>
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          How are you feeling?
-        </ThemedText>
-        <View style={styles.moodContainer}>
+        <ThemedText style={styles.sectionTitle}>How are you feeling?</ThemedText>
+        <View style={styles.moodRow}>
           {moods.map((mood) => (
             <Pressable
-              key={mood.emoji}
+              key={mood.id}
               style={[
                 styles.moodButton,
-                {
-                  backgroundColor:
-                    selectedMood === mood.emoji
-                      ? mood.color
-                      : theme.backgroundDefault,
-                },
-                selectedMood === mood.emoji && Shadows.small,
+                selectedMood === mood.id && styles.moodButtonSelected,
               ]}
-              onPress={() => handleMoodSelect(mood.emoji)}
+              onPress={() => handleMoodSelect(mood.id)}
             >
               <Feather
                 name={mood.icon as any}
-                size={22}
-                color={selectedMood === mood.emoji ? "#FFF" : mood.color}
+                size={24}
+                color={selectedMood === mood.id ? Colors.light.primary : theme.textSecondary}
               />
-              <ThemedText
-                type="small"
-                style={[
-                  styles.moodLabel,
-                  { color: selectedMood === mood.emoji ? "#FFF" : theme.textSecondary },
-                ]}
-              >
-                {mood.label}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          Daily Tracking
-        </ThemedText>
-        <View style={styles.activitiesGrid}>
-          {activities.map((activity) => (
-            <Pressable
-              key={activity.id}
-              style={[styles.activityCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
-            >
-              <View style={[styles.activityIcon, { backgroundColor: activity.color + "20" }]}>
-                <Feather name={activity.icon as any} size={20} color={activity.color} />
-              </View>
-              <ThemedText type="h4" style={styles.activityValue}>{activity.value}</ThemedText>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {activity.label}
-              </ThemedText>
             </Pressable>
           ))}
         </View>
@@ -164,94 +126,82 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <ThemedText type="h3">Today's Tasks</ThemedText>
-          <Pressable style={[styles.addButton, { backgroundColor: Colors.light.primary + "15" }]}>
-            <Feather name="plus" size={18} color={Colors.light.primary} />
-          </Pressable>
+          <ThemedText style={styles.sectionTitle}>Daily Goals</ThemedText>
+          <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            1/5 selected
+          </ThemedText>
         </View>
-        <View style={styles.todoList}>
-          {todos.map((todo) => (
-            <Pressable
-              key={todo.id}
-              style={[styles.todoItem, { backgroundColor: theme.backgroundDefault }, Shadows.small]}
-              onPress={() => toggleTodo(todo.id)}
-            >
-              <View
-                style={[
-                  styles.todoCheckbox,
-                  {
-                    backgroundColor: todo.completed ? Colors.light.primary : "transparent",
-                    borderColor: todo.completed ? Colors.light.primary : theme.border,
-                  },
-                ]}
-              >
-                {todo.completed ? (
-                  <Feather name="check" size={12} color="#FFF" />
-                ) : null}
+        <View style={styles.goalsGrid}>
+          {goalCards.map((goal) => (
+            <Pressable key={goal.id} style={[styles.goalCard, { backgroundColor: goal.bgColor }]}>
+              <Image source={goal.image} style={styles.goalImage} contentFit="contain" />
+              <ThemedText style={styles.goalTitle}>{goal.title}</ThemedText>
+              <View style={styles.goalMeta}>
+                <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
+                  {goal.sessions}
+                </ThemedText>
+                <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
+                  {goal.duration}
+                </ThemedText>
               </View>
-              <ThemedText
-                style={[
-                  styles.todoText,
-                  todo.completed && { textDecorationLine: "line-through", color: theme.textSecondary },
-                ]}
-              >
-                {todo.text}
-              </ThemedText>
             </Pressable>
           ))}
         </View>
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="h3" style={styles.sectionTitle}>
-          Meal Plan
-        </ThemedText>
-        <View style={[styles.mealCard, { backgroundColor: theme.backgroundDefault }, Shadows.small]}>
-          <View style={styles.mealItem}>
-            <View style={[styles.mealIcon, { backgroundColor: Colors.light.accent + "20" }]}>
-              <Feather name="sunrise" size={16} color={Colors.light.accent} />
-            </View>
-            <View style={styles.mealInfo}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>Breakfast</ThemedText>
-              <ThemedText type="body">Oatmeal with berries</ThemedText>
-            </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>350 cal</ThemedText>
-          </View>
-          <View style={[styles.mealDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.mealItem}>
-            <View style={[styles.mealIcon, { backgroundColor: Colors.light.secondary + "20" }]}>
-              <Feather name="sun" size={16} color={Colors.light.secondary} />
-            </View>
-            <View style={styles.mealInfo}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>Lunch</ThemedText>
-              <ThemedText type="body">Grilled chicken salad</ThemedText>
-            </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>480 cal</ThemedText>
-          </View>
-          <View style={[styles.mealDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.mealItem}>
-            <View style={[styles.mealIcon, { backgroundColor: Colors.light.primary + "20" }]}>
-              <Feather name="moon" size={16} color={Colors.light.primary} />
-            </View>
-            <View style={styles.mealInfo}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>Dinner</ThemedText>
-              <ThemedText type="body">Salmon with vegetables</ThemedText>
-            </View>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>520 cal</ThemedText>
-          </View>
+        <ThemedText style={styles.sectionTitle}>Today's Schedule</ThemedText>
+        <View style={styles.taskList}>
+          {tasks.map((task) => (
+            <Pressable
+              key={task.id}
+              style={[styles.taskItem, { backgroundColor: theme.backgroundSecondary }]}
+              onPress={() => toggleTask(task.id)}
+            >
+              <View
+                style={[
+                  styles.taskCheckbox,
+                  {
+                    backgroundColor: task.completed ? Colors.light.primary : "transparent",
+                    borderColor: task.completed ? Colors.light.primary : theme.border,
+                  },
+                ]}
+              >
+                {task.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
+              </View>
+              <View style={styles.taskContent}>
+                <ThemedText
+                  style={[
+                    styles.taskText,
+                    task.completed && { textDecorationLine: "line-through", color: theme.textSecondary },
+                  ]}
+                >
+                  {task.text}
+                </ThemedText>
+                <ThemedText style={[styles.taskTime, { color: theme.textSecondary }]}>
+                  {task.time}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ))}
         </View>
       </View>
 
       <View style={styles.section}>
-        <View style={[styles.streakCard, { backgroundColor: Colors.light.primary + "12" }]}>
-          <View style={[styles.streakIcon, { backgroundColor: Colors.light.primary }]}>
-            <Feather name="zap" size={24} color="#FFF" />
-          </View>
-          <View style={styles.streakInfo}>
-            <ThemedText type="h2" style={{ color: Colors.light.primary }}>7 Days</ThemedText>
-            <ThemedText type="body" style={{ color: theme.textSecondary }}>
-              Amazing streak! Keep going.
+        <View style={[styles.featureCard, { backgroundColor: Colors.light.cardPeach }]}>
+          <Image
+            source={require("../assets/images/line_art_yoga_prayer_pose_illustration.png")}
+            style={styles.featureImage}
+            contentFit="contain"
+          />
+          <View style={styles.featureContent}>
+            <ThemedText style={styles.featureTitle}>Breath In</ThemedText>
+            <ThemedText style={[styles.featureDescription, { color: theme.textSecondary }]}>
+              A 5-minute intro to breathing energy to heal and bring positivity
             </ThemedText>
+            <Pressable style={[styles.startButton, { backgroundColor: Colors.light.primary }]}>
+              <ThemedText style={styles.startButtonText}>Start</ThemedText>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -263,34 +213,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  greetingSection: {
-    marginBottom: Spacing.xl,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: Spacing["2xl"],
   },
   greeting: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+    color: Colors.light.textSecondary,
     marginBottom: Spacing.xs,
   },
-  quoteCard: {
-    flexDirection: "row",
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xl,
-    overflow: "hidden",
+  headerTitle: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
   },
-  quoteAccent: {
-    width: 4,
-    borderRadius: 2,
-    marginRight: Spacing.md,
-  },
-  quoteText: {
-    flex: 1,
-    fontStyle: "italic",
-    lineHeight: 24,
+  searchButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.light.backgroundSecondary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   section: {
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing["2xl"],
   },
   sectionHeader: {
     flexDirection: "row",
@@ -298,110 +248,130 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: Spacing.md,
   },
-  addButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
+    marginBottom: Spacing.md,
   },
-  moodContainer: {
+  sectionSubtitle: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  moodRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: Spacing.sm,
   },
   moodButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xs,
-    borderRadius: BorderRadius.lg,
-  },
-  moodLabel: {
-    marginTop: Spacing.xs,
-    fontSize: 11,
-  },
-  activitiesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.md,
-  },
-  activityCard: {
-    width: "47%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    alignItems: "flex-start",
-  },
-  activityIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.sm,
-  },
-  activityValue: {
-    marginBottom: Spacing.xs,
-  },
-  todoList: {
-    gap: Spacing.sm,
-  },
-  todoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.md,
-  },
-  todoCheckbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  todoText: {
-    flex: 1,
-  },
-  mealCard: {
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-  },
-  mealItem: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  mealIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  mealInfo: {
-    flex: 1,
-  },
-  mealDivider: {
-    height: 1,
-    marginVertical: Spacing.md,
-  },
-  streakCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    gap: Spacing.lg,
-  },
-  streakIcon: {
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: Colors.light.backgroundSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
-  streakInfo: {
+  moodButtonSelected: {
+    backgroundColor: Colors.light.primary + "20",
+    borderWidth: 1.5,
+    borderColor: Colors.light.primary,
+  },
+  goalsGrid: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  goalCard: {
     flex: 1,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    height: 200,
+  },
+  goalImage: {
+    width: "100%",
+    height: 100,
+    marginBottom: Spacing.sm,
+  },
+  goalTitle: {
+    fontSize: 17,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
+    marginBottom: Spacing.xs,
+  },
+  goalMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  goalMetaText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  taskList: {
+    gap: Spacing.sm,
+  },
+  taskItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  taskCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  taskContent: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  taskText: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+    color: Colors.light.text,
+  },
+  taskTime: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  featureCard: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  featureImage: {
+    width: 100,
+    height: 120,
+  },
+  featureContent: {
+    flex: 1,
+    marginLeft: Spacing.lg,
+  },
+  featureTitle: {
+    fontSize: 22,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
+    marginBottom: Spacing.sm,
+  },
+  featureDescription: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+    lineHeight: 20,
+    marginBottom: Spacing.lg,
+  },
+  startButton: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    alignSelf: "flex-start",
+  },
+  startButtonText: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#FFFFFF",
   },
 });

@@ -11,38 +11,60 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import Svg, { Path, Circle } from "react-native-svg";
 
 import { ThemedText } from "@/components/ThemedText";
-import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 const onboardingData = [
   {
     id: "1",
-    image: require("../assets/images/meditation_onboarding_illustration.png"),
-    title: "Your Safe Space",
-    subtitle: "A peaceful sanctuary for your mental wellness journey. Take a breath, you're in the right place.",
+    image: require("../assets/images/line_art_meditation_woman_illustration.png"),
+    title: "Find Your\nInner Peace",
+    subtitle: "Forget about life's stress and problems and learn to live a happy life",
   },
   {
     id: "2",
-    image: require("../assets/images/support_hands_onboarding_illustration.png"),
-    title: "Always Supported",
-    subtitle: "Connect with caring professionals and an AI companion that's here for you 24/7.",
+    image: require("../assets/images/line_art_supportive_hands_illustration.png"),
+    title: "Connect With\nYourself",
+    subtitle: "Take time to breathe, reflect, and discover your true potential",
   },
   {
     id: "3",
-    image: require("../assets/images/growth_onboarding_illustration.png"),
-    title: "Grow Together",
-    subtitle: "Track your progress, celebrate small wins, and watch yourself bloom.",
+    image: require("../assets/images/line_art_yoga_prayer_pose_illustration.png"),
+    title: "Start Your\nHealing Journey",
+    subtitle: "Begin your path to wellness with guided meditation and support",
   },
 ];
 
 type OnboardingNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const DecorativeElements = () => (
+  <View style={styles.decorativeContainer}>
+    <View style={[styles.decorStar, { top: 80, left: 30 }]}>
+      <Feather name="x" size={12} color="#E8B4B8" />
+    </View>
+    <View style={[styles.decorStar, { top: 120, right: 40 }]}>
+      <Feather name="x" size={10} color="#AFCCE1" />
+    </View>
+    <View style={[styles.decorStar, { top: 200, left: 60 }]}>
+      <Feather name="x" size={8} color="#C9A77C" />
+    </View>
+    <View style={[styles.decorDot, { top: 150, left: 20, backgroundColor: "#F5DED0" }]} />
+    <View style={[styles.decorDot, { top: 100, right: 60, backgroundColor: "#AFCCE1" }]} />
+    <View style={[styles.decorCurve, { top: 60, right: 20 }]}>
+      <Svg width="60" height="60" viewBox="0 0 60 60">
+        <Path d="M10 50 Q30 10 50 30" stroke="#F5DED0" strokeWidth="1" fill="none" />
+      </Svg>
+    </View>
+  </View>
+);
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -67,45 +89,28 @@ export default function OnboardingScreen() {
     navigation.replace("Main");
   };
 
-  const renderItem = ({ item }: { item: (typeof onboardingData)[0] }) => (
+  const renderItem = ({ item, index }: { item: (typeof onboardingData)[0]; index: number }) => (
     <View style={[styles.slide, { width }]}>
-      <View style={[styles.imageContainer, { backgroundColor: Colors.light.warm + "30" }]}>
+      <View style={styles.illustrationContainer}>
+        <View style={[styles.peachBlob, { backgroundColor: Colors.light.peach }]} />
+        <View style={[styles.blueBlob, { backgroundColor: Colors.light.secondary + "40" }]} />
         <Image
           source={item.image}
-          style={styles.image}
+          style={styles.illustration}
           contentFit="contain"
           transition={300}
         />
-      </View>
-      <View style={styles.textContainer}>
-        <ThemedText type="h1" style={styles.title}>
-          {item.title}
-        </ThemedText>
-        <ThemedText
-          type="body"
-          style={[styles.subtitle, { color: theme.textSecondary }]}
-        >
-          {item.subtitle}
-        </ThemedText>
       </View>
     </View>
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("../../assets/images/icon.png")}
-            style={styles.logo}
-            contentFit="contain"
-          />
-          <ThemedText style={[styles.logoText, { color: Colors.light.primary }]}>
-            Heal Here
-          </ThemedText>
-        </View>
+    <View style={[styles.container, { backgroundColor: Colors.light.warm }]}>
+      <DecorativeElements />
+      
+      <View style={[styles.skipContainer, { paddingTop: insets.top + Spacing.md }]}>
         <Pressable onPress={handleSkip} style={styles.skipButton}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+          <ThemedText style={[styles.skipText, { color: theme.textSecondary }]}>
             Skip
           </ThemedText>
         </Pressable>
@@ -123,30 +128,45 @@ export default function OnboardingScreen() {
           const newIndex = Math.round(e.nativeEvent.contentOffset.x / width);
           setCurrentIndex(newIndex);
         }}
+        style={styles.flatList}
       />
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing.xl }]}>
-        <View style={styles.pagination}>
-          {onboardingData.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor:
-                    index === currentIndex
-                      ? Colors.light.primary
-                      : theme.border,
-                  width: index === currentIndex ? 28 : 8,
-                },
-              ]}
-            />
-          ))}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + Spacing["3xl"] }]}>
+        <View style={styles.textContainer}>
+          <ThemedText style={styles.title}>
+            {onboardingData[currentIndex].title}
+          </ThemedText>
+          <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {onboardingData[currentIndex].subtitle}
+          </ThemedText>
         </View>
 
-        <Button onPress={handleNext} style={styles.button}>
-          {currentIndex === onboardingData.length - 1 ? "Get Started" : "Continue"}
-        </Button>
+        <View style={styles.bottomRow}>
+          <View style={styles.pagination}>
+            {onboardingData.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor:
+                      index === currentIndex
+                        ? theme.text
+                        : theme.border,
+                    width: index === currentIndex ? 24 : 8,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+
+          <Pressable
+            style={[styles.nextButton, { borderColor: theme.text }]}
+            onPress={handleNext}
+          >
+            <Feather name="chevron-right" size={24} color={theme.text} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -156,67 +176,97 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  decorativeContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  decorStar: {
+    position: "absolute",
+  },
+  decorDot: {
+    position: "absolute",
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  decorCurve: {
+    position: "absolute",
+  },
+  skipContainer: {
+    alignItems: "flex-end",
     paddingHorizontal: Spacing.xl,
-  },
-  logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    marginRight: Spacing.sm,
-  },
-  logoText: {
-    fontSize: 18,
-    fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    zIndex: 10,
   },
   skipButton: {
     padding: Spacing.sm,
+  },
+  skipText: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  flatList: {
+    flex: 1,
   },
   slide: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: Spacing["2xl"],
   },
-  imageContainer: {
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: BorderRadius["2xl"],
+  illustrationContainer: {
+    width: width * 0.85,
+    height: width * 0.85,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing["2xl"],
+    position: "relative",
   },
-  image: {
-    width: "80%",
-    height: "80%",
+  peachBlob: {
+    position: "absolute",
+    width: width * 0.5,
+    height: width * 0.5,
+    borderRadius: width * 0.25,
+    bottom: "10%",
+    left: "5%",
+    transform: [{ scaleX: 1.3 }, { rotate: "-15deg" }],
   },
-  textContainer: {
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+  blueBlob: {
+    position: "absolute",
+    width: width * 0.35,
+    height: width * 0.35,
+    borderRadius: width * 0.2,
+    top: "15%",
+    right: "10%",
+    transform: [{ scaleY: 1.2 }],
   },
-  title: {
-    textAlign: "center",
-    marginBottom: Spacing.md,
-  },
-  subtitle: {
-    textAlign: "center",
-    lineHeight: 24,
+  illustration: {
+    width: "90%",
+    height: "90%",
+    zIndex: 1,
   },
   footer: {
     paddingHorizontal: Spacing.xl,
-    gap: Spacing["2xl"],
+  },
+  textContainer: {
+    marginBottom: Spacing["3xl"],
+  },
+  title: {
+    fontSize: 36,
+    lineHeight: 44,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
+    marginBottom: Spacing.md,
+  },
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 24,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   pagination: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
     gap: Spacing.sm,
   },
@@ -224,7 +274,12 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
   },
-  button: {
-    backgroundColor: Colors.light.primary,
+  nextButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

@@ -29,7 +29,7 @@ export function FloatingButtons() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; message: string }[]>([
-    { role: "ai", message: "Hi there! I'm your AI companion. How are you feeling today?" },
+    { role: "ai", message: "Hi there! I'm here to support you. How are you feeling today?" },
   ]);
 
   const emergencyScale = useSharedValue(1);
@@ -88,7 +88,6 @@ export function FloatingButtons() {
           style={[
             styles.emergencyButton,
             { backgroundColor: Colors.light.emergency },
-            Shadows.medium,
             emergencyAnimatedStyle,
           ]}
           onPress={handleEmergencyPress}
@@ -99,14 +98,13 @@ export function FloatingButtons() {
             emergencyScale.value = withSpring(1, springConfig);
           }}
         >
-          <Feather name="phone" size={18} color="#FFF" />
+          <Feather name="phone" size={16} color="#FFF" />
         </AnimatedPressable>
 
         <AnimatedPressable
           style={[
             styles.chatButton,
-            { backgroundColor: Colors.light.primary },
-            Shadows.medium,
+            { backgroundColor: Colors.light.text, borderColor: theme.border },
             chatAnimatedStyle,
           ]}
           onPress={handleChatPress}
@@ -117,7 +115,7 @@ export function FloatingButtons() {
             chatScale.value = withSpring(1, springConfig);
           }}
         >
-          <Feather name="message-circle" size={24} color="#FFF" />
+          <Feather name="message-circle" size={22} color="#FFF" />
         </AnimatedPressable>
       </View>
 
@@ -154,10 +152,6 @@ export function FloatingButtons() {
                 <Feather name="message-square" size={18} color={Colors.light.primary} />
                 <ThemedText type="small">Text HOME to 741741</ThemedText>
               </Pressable>
-              <Pressable style={[styles.emergencyOption, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="globe" size={18} color={Colors.light.primary} />
-                <ThemedText type="small">International Resources</ThemedText>
-              </Pressable>
             </View>
 
             <Pressable
@@ -178,18 +172,20 @@ export function FloatingButtons() {
       >
         <View style={styles.chatModalContainer}>
           <View style={[styles.chatModalContent, { backgroundColor: theme.backgroundRoot }]}>
-            <View style={[styles.chatHeader, { backgroundColor: Colors.light.primary }]}>
+            <View style={[styles.chatHeader, { backgroundColor: theme.backgroundDefault, borderBottomColor: theme.border }]}>
               <View style={styles.chatHeaderLeft}>
-                <View style={styles.chatAvatar}>
+                <View style={[styles.chatAvatar, { backgroundColor: Colors.light.cardPeach }]}>
                   <Feather name="heart" size={18} color={Colors.light.primary} />
                 </View>
                 <View>
                   <ThemedText style={styles.chatHeaderTitle}>AI Companion</ThemedText>
-                  <ThemedText style={styles.chatHeaderSubtitle}>Always here for you</ThemedText>
+                  <ThemedText style={[styles.chatHeaderSubtitle, { color: theme.textSecondary }]}>
+                    Always here for you
+                  </ThemedText>
                 </View>
               </View>
               <Pressable onPress={() => setShowChatModal(false)} style={styles.chatCloseButton}>
-                <Feather name="x" size={24} color="#FFF" />
+                <Feather name="x" size={24} color={theme.text} />
               </Pressable>
             </View>
 
@@ -200,14 +196,14 @@ export function FloatingButtons() {
                   style={[
                     styles.chatBubble,
                     chat.role === "user"
-                      ? [styles.userBubble, { backgroundColor: Colors.light.primary }]
-                      : [styles.aiBubble, { backgroundColor: theme.backgroundDefault }],
+                      ? [styles.userBubble, { backgroundColor: Colors.light.text }]
+                      : [styles.aiBubble, { backgroundColor: Colors.light.cardPeach }],
                   ]}
                 >
                   <ThemedText
                     style={[
                       styles.chatBubbleText,
-                      chat.role === "user" && { color: "#FFF" },
+                      { color: chat.role === "user" ? "#FFF" : theme.text },
                     ]}
                   >
                     {chat.message}
@@ -226,10 +222,10 @@ export function FloatingButtons() {
                 onSubmitEditing={handleSendMessage}
               />
               <Pressable
-                style={[styles.sendButton, { backgroundColor: Colors.light.primary }]}
+                style={[styles.sendButton, { backgroundColor: Colors.light.text }]}
                 onPress={handleSendMessage}
               >
-                <Feather name="send" size={18} color="#FFF" />
+                <Feather name="send" size={16} color="#FFF" />
               </Pressable>
             </View>
           </View>
@@ -243,33 +239,33 @@ const styles = StyleSheet.create({
   container: {
     position: "absolute",
     right: Spacing.xl,
-    gap: Spacing.md,
+    gap: Spacing.sm,
     zIndex: 1000,
   },
   emergencyButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
   chatButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(52,50,50,0.6)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
     padding: Spacing.xl,
   },
   emergencyModalContent: {
     width: "100%",
-    maxWidth: 360,
+    maxWidth: 340,
     borderRadius: BorderRadius.xl,
     padding: Spacing["2xl"],
   },
@@ -305,6 +301,7 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "600",
     fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
   },
   emergencyOptions: {
     gap: Spacing.sm,
@@ -339,6 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: Spacing.lg,
     paddingTop: Spacing.xl,
+    borderBottomWidth: 1,
   },
   chatHeaderLeft: {
     flexDirection: "row",
@@ -349,18 +347,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFF",
     alignItems: "center",
     justifyContent: "center",
   },
   chatHeaderTitle: {
-    color: "#FFF",
     fontWeight: "600",
     fontSize: 16,
     fontFamily: "PlusJakartaSans_600SemiBold",
   },
   chatHeaderSubtitle: {
-    color: "rgba(255,255,255,0.8)",
     fontSize: 12,
     fontFamily: "PlusJakartaSans_400Regular",
   },
@@ -391,6 +386,7 @@ const styles = StyleSheet.create({
   chatBubbleText: {
     fontSize: 15,
     lineHeight: 22,
+    fontFamily: "PlusJakartaSans_400Regular",
   },
   chatInputContainer: {
     flexDirection: "row",
@@ -401,16 +397,16 @@ const styles = StyleSheet.create({
   },
   chatInput: {
     flex: 1,
-    height: 48,
+    height: 44,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.full,
     fontSize: 15,
     fontFamily: "PlusJakartaSans_400Regular",
   },
   sendButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },

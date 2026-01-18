@@ -9,7 +9,7 @@ import Animated, {
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { BorderRadius, Spacing, Colors, Shadows } from "@/constants/theme";
+import { BorderRadius, Spacing, Colors } from "@/constants/theme";
 
 interface ButtonProps {
   onPress?: () => void;
@@ -61,7 +61,7 @@ export function Button({
       case "primary":
         return Colors.light.primary;
       case "secondary":
-        return Colors.light.secondary;
+        return Colors.light.text;
       case "outline":
         return "transparent";
       default:
@@ -73,7 +73,7 @@ export function Button({
     if (disabled) return theme.textSecondary;
     switch (variant) {
       case "outline":
-        return Colors.light.primary;
+        return Colors.light.text;
       default:
         return "#FFFFFF";
     }
@@ -89,10 +89,9 @@ export function Button({
         styles.button,
         {
           backgroundColor: getBackgroundColor(),
-          borderColor: variant === "outline" ? Colors.light.primary : "transparent",
+          borderColor: variant === "outline" ? Colors.light.text : "transparent",
           borderWidth: variant === "outline" ? 1.5 : 0,
         },
-        variant === "primary" && !disabled && Shadows.small,
         style,
         animatedStyle,
       ]}
@@ -117,6 +116,6 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "600",
     fontFamily: "PlusJakartaSans_600SemiBold",
-    fontSize: 16,
+    fontSize: 15,
   },
 });

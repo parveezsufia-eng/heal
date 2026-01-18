@@ -1,61 +1,85 @@
-import { Text, type TextProps } from "react-native";
-
+import React from "react";
+import { Text, StyleSheet, TextProps, TextStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
-import { Typography } from "@/constants/theme";
+import { Typography, Colors } from "@/constants/theme";
 
-export type ThemedTextProps = TextProps & {
-  lightColor?: string;
-  darkColor?: string;
+interface ThemedTextProps extends TextProps {
   type?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "link";
-};
+  style?: TextStyle | TextStyle[];
+}
 
 export function ThemedText({
-  style,
-  lightColor,
-  darkColor,
   type = "body",
-  ...rest
+  style,
+  children,
+  ...props
 }: ThemedTextProps) {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
 
-  const getColor = () => {
-    if (isDark && darkColor) {
-      return darkColor;
-    }
-
-    if (!isDark && lightColor) {
-      return lightColor;
-    }
-
-    if (type === "link") {
-      return theme.link;
-    }
-
-    return theme.text;
-  };
-
-  const getTypeStyle = () => {
+  const getTypeStyle = (): TextStyle => {
     switch (type) {
       case "h1":
-        return Typography.h1;
+        return {
+          fontSize: 32,
+          lineHeight: 40,
+          fontFamily: "PlayfairDisplay_400Regular",
+          color: theme.text,
+        };
       case "h2":
-        return Typography.h2;
+        return {
+          fontSize: 26,
+          lineHeight: 34,
+          fontFamily: "PlayfairDisplay_400Regular",
+          color: theme.text,
+        };
       case "h3":
-        return Typography.h3;
+        return {
+          fontSize: 20,
+          lineHeight: 28,
+          fontFamily: "PlayfairDisplay_400Regular",
+          color: theme.text,
+        };
       case "h4":
-        return Typography.h4;
+        return {
+          fontSize: 17,
+          lineHeight: 24,
+          fontFamily: "PlusJakartaSans_500Medium",
+          color: theme.text,
+        };
       case "body":
-        return Typography.body;
+        return {
+          fontSize: 15,
+          lineHeight: 22,
+          fontFamily: "PlusJakartaSans_400Regular",
+          color: theme.text,
+        };
       case "small":
-        return Typography.small;
+        return {
+          fontSize: 13,
+          lineHeight: 18,
+          fontFamily: "PlusJakartaSans_400Regular",
+          color: theme.text,
+        };
       case "link":
-        return Typography.link;
+        return {
+          fontSize: 15,
+          lineHeight: 22,
+          fontFamily: "PlusJakartaSans_500Medium",
+          color: theme.link,
+        };
       default:
-        return Typography.body;
+        return {
+          fontSize: 15,
+          lineHeight: 22,
+          fontFamily: "PlusJakartaSans_400Regular",
+          color: theme.text,
+        };
     }
   };
 
   return (
-    <Text style={[{ color: getColor() }, getTypeStyle(), style]} {...rest} />
+    <Text style={[getTypeStyle(), style]} {...props}>
+      {children}
+    </Text>
   );
 }
