@@ -14,7 +14,6 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { FloatingButtons } from "@/components/FloatingButtons";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
@@ -92,13 +91,21 @@ export default function HomeScreen() {
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable style={[styles.searchBar, { borderColor: theme.border }]}>
-          <Feather name="cpu" size={18} color={Colors.light.primary} />
-          <ThemedText style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
-            Ask AI anything...
-          </ThemedText>
-          <Feather name="search" size={18} color={theme.textSecondary} />
-        </Pressable>
+        <View style={styles.searchRow}>
+          <Pressable style={[styles.searchBar, { borderColor: theme.border }]}>
+            <Feather name="cpu" size={18} color={Colors.light.primary} />
+            <ThemedText style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
+              Ask AI anything...
+            </ThemedText>
+            <Feather name="search" size={18} color={theme.textSecondary} />
+          </Pressable>
+          <Pressable 
+            style={styles.chatButton}
+            onPress={() => {}}
+          >
+            <Feather name="message-circle" size={20} color="#FFF" />
+          </Pressable>
+        </View>
 
         <View style={styles.header}>
           <View>
@@ -213,7 +220,6 @@ export default function HomeScreen() {
         </View>
       </View>
       </ScrollView>
-      <FloatingButtons />
     </View>
   );
 }
@@ -225,7 +231,14 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
   searchBar: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
@@ -233,13 +246,20 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     backgroundColor: "transparent",
-    marginBottom: Spacing.xl,
     gap: Spacing.sm,
   },
   searchPlaceholder: {
     flex: 1,
     fontSize: 14,
     fontFamily: "PlusJakartaSans_400Regular",
+  },
+  chatButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.light.text,
+    alignItems: "center",
+    justifyContent: "center",
   },
   header: {
     marginBottom: Spacing["2xl"],
