@@ -1,30 +1,41 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
-
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: "#3D3D3D",
+    textSecondary: "#8B8B8B",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-    link: "#007AFF",
-    backgroundRoot: "#FFFFFF", // Elevation 0
-    backgroundDefault: "#F2F2F2", // Elevation 1
-    backgroundSecondary: "#E6E6E6", // Elevation 2
-    backgroundTertiary: "#D9D9D9", // Elevation 3
+    tabIconDefault: "#8B8B8B",
+    tabIconSelected: "#A8D5BA",
+    link: "#A8D5BA",
+    primary: "#A8D5BA",
+    secondary: "#E8B4B8",
+    accent: "#FFD6A5",
+    emergency: "#FF6B6B",
+    success: "#9FD8CB",
+    border: "#E8E8E8",
+    backgroundRoot: "#F9F7F4",
+    backgroundDefault: "#FFFFFF",
+    backgroundSecondary: "#F5F3F0",
+    backgroundTertiary: "#EBE9E6",
   },
   dark: {
     text: "#ECEDEE",
+    textSecondary: "#9BA1A6",
     buttonText: "#FFFFFF",
     tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    tabIconSelected: "#A8D5BA",
+    link: "#A8D5BA",
+    primary: "#A8D5BA",
+    secondary: "#E8B4B8",
+    accent: "#FFD6A5",
+    emergency: "#FF6B6B",
+    success: "#9FD8CB",
+    border: "#353739",
+    backgroundRoot: "#1F2123",
+    backgroundDefault: "#2A2C2E",
+    backgroundSecondary: "#353739",
+    backgroundTertiary: "#404244",
   },
 };
 
@@ -45,74 +56,100 @@ export const Spacing = {
 export const BorderRadius = {
   xs: 8,
   sm: 12,
-  md: 18,
-  lg: 24,
-  xl: 30,
-  "2xl": 40,
-  "3xl": 50,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  "2xl": 32,
+  "3xl": 40,
   full: 9999,
 };
 
 export const Typography = {
   h1: {
-    fontSize: 32,
-    lineHeight: 40,
-    fontWeight: "700" as const,
-  },
-  h2: {
     fontSize: 28,
     lineHeight: 36,
     fontWeight: "700" as const,
+    fontFamily: "Nunito_700Bold",
   },
-  h3: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: "600" as const,
-  },
-  h4: {
-    fontSize: 20,
+  h2: {
+    fontSize: 22,
     lineHeight: 28,
     fontWeight: "600" as const,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  h3: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "600" as const,
+    fontFamily: "Nunito_600SemiBold",
+  },
+  h4: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "600" as const,
+    fontFamily: "Nunito_600SemiBold",
   },
   body: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: "400" as const,
+    fontFamily: "Nunito_400Regular",
   },
   small: {
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "400" as const,
+    fontFamily: "Nunito_400Regular",
   },
   link: {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: "400" as const,
+    fontFamily: "Nunito_400Regular",
+  },
+};
+
+export const Shadows = {
+  small: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  medium: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  large: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
+    sans: "Nunito_400Regular",
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {
-    sans: "normal",
+    sans: "Nunito_400Regular",
     serif: "serif",
     rounded: "normal",
     mono: "monospace",
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    sans: "Nunito_400Regular, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
-    rounded:
-      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });

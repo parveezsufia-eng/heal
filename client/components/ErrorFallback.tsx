@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
+import { Spacing, BorderRadius, Fonts, Colors } from "@/constants/theme";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -58,12 +58,16 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: Colors.light.secondary + "20" }]}>
+          <Feather name="heart" size={48} color={Colors.light.secondary} />
+        </View>
+
         <ThemedText type="h1" style={styles.title}>
-          Something went wrong
+          Oops! Something went wrong
         </ThemedText>
 
-        <ThemedText type="body" style={styles.message}>
-          Please reload the app to continue.
+        <ThemedText type="body" style={[styles.message, { color: theme.textSecondary }]}>
+          Heal Here encountered an unexpected issue. Don't worry, your data is safe.
         </ThemedText>
 
         <Pressable
@@ -71,17 +75,18 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor: theme.link,
+              backgroundColor: Colors.light.primary,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
           ]}
         >
+          <Feather name="refresh-cw" size={18} color="#FFF" style={{ marginRight: Spacing.sm }} />
           <ThemedText
             type="body"
-            style={[styles.buttonText, { color: theme.buttonText }]}
+            style={[styles.buttonText, { color: "#FFF" }]}
           >
-            Try Again
+            Restart Heal Here
           </ThemedText>
         </Pressable>
       </View>
@@ -159,13 +164,20 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
   },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.lg,
+  },
   title: {
     textAlign: "center",
     lineHeight: 40,
   },
   message: {
     textAlign: "center",
-    opacity: 0.7,
     lineHeight: 24,
   },
   topButton: {
@@ -181,10 +193,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing["2xl"],
     minWidth: 200,
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,

@@ -4,11 +4,18 @@ import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
 import HomeStackNavigator from "@/navigation/HomeStackNavigator";
+import ExploreStackNavigator from "@/navigation/ExploreStackNavigator";
+import JournalStackNavigator from "@/navigation/JournalStackNavigator";
+import TherapistStackNavigator from "@/navigation/TherapistStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
+import { Colors } from "@/constants/theme";
 
 export type MainTabParamList = {
   HomeTab: undefined;
+  ExploreTab: undefined;
+  JournalTab: undefined;
+  TherapistTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -21,7 +28,7 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={{
-        tabBarActiveTintColor: theme.tabIconSelected,
+        tabBarActiveTintColor: Colors.light.primary,
         tabBarInactiveTintColor: theme.tabIconDefault,
         tabBarStyle: {
           position: "absolute",
@@ -31,6 +38,9 @@ export default function MainTabNavigator() {
           }),
           borderTopWidth: 0,
           elevation: 0,
+          height: Platform.OS === "ios" ? 88 : 60,
+          paddingBottom: Platform.OS === "ios" ? 28 : 8,
+          paddingTop: 8,
         },
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
@@ -41,6 +51,10 @@ export default function MainTabNavigator() {
             />
           ) : null,
         headerShown: false,
+        tabBarLabelStyle: {
+          fontFamily: "Nunito_600SemiBold",
+          fontSize: 11,
+        },
       }}
     >
       <Tab.Screen
@@ -49,7 +63,37 @@ export default function MainTabNavigator() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+            <Feather name="home" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ExploreTab"
+        component={ExploreStackNavigator}
+        options={{
+          title: "Explore",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="compass" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="JournalTab"
+        component={JournalStackNavigator}
+        options={{
+          title: "Journal",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="book" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="TherapistTab"
+        component={TherapistStackNavigator}
+        options={{
+          title: "Therapist",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="user-check" size={22} color={color} />
           ),
         }}
       />
@@ -59,7 +103,7 @@ export default function MainTabNavigator() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
+            <Feather name="user" size={22} color={color} />
           ),
         }}
       />
