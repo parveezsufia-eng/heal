@@ -92,17 +92,20 @@ export default function HomeScreen() {
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
       >
+        <Pressable style={[styles.searchBar, { borderColor: theme.border }]}>
+          <Feather name="cpu" size={18} color={Colors.light.primary} />
+          <ThemedText style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
+            Ask AI anything...
+          </ThemedText>
+          <Feather name="search" size={18} color={theme.textSecondary} />
+        </Pressable>
+
         <View style={styles.header}>
           <View>
             <ThemedText style={styles.greeting}>{greeting}</ThemedText>
             <ThemedText style={styles.headerTitle}>
               Ready to start{"\n"}your goals?
             </ThemedText>
-          </View>
-          <View style={styles.headerActions}>
-            <Pressable style={styles.searchButton}>
-              <Feather name="search" size={22} color={theme.text} />
-            </Pressable>
           </View>
         </View>
 
@@ -222,16 +225,24 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: Spacing["2xl"],
-  },
-  headerActions: {
+  searchBar: {
     flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    backgroundColor: "transparent",
+    marginBottom: Spacing.xl,
     gap: Spacing.sm,
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  header: {
+    marginBottom: Spacing["2xl"],
   },
   greeting: {
     fontSize: 13,
@@ -244,14 +255,6 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontFamily: "PlayfairDisplay_400Regular",
     color: Colors.light.text,
-  },
-  searchButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.light.backgroundSecondary,
-    alignItems: "center",
-    justifyContent: "center",
   },
   section: {
     marginBottom: Spacing["2xl"],
