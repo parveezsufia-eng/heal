@@ -23,6 +23,7 @@ export const Colors = {
     cardBlue: "#E8F4FA",
     cardPeach: "#FDF3ED",
     cardGreen: "#EDF7F4",
+    softBlue: "#5B9BD5",
   },
   dark: {
     text: "#F5F5F5",
@@ -46,6 +47,7 @@ export const Colors = {
     cardBlue: "#1E2A30",
     cardPeach: "#2A2420",
     cardGreen: "#1E2A25",
+    softBlue: "#5B9BD5",
   },
 };
 
