@@ -95,7 +95,7 @@ export default function OnboardingScreen() {
         <Image
           source={item.image}
           style={styles.illustration}
-          contentFit="cover"
+          contentFit="contain"
           transition={300}
         />
       </View>
@@ -212,14 +212,14 @@ const styles = StyleSheet.create({
   },
   illustrationContainer: {
     width: width,
-    height: height * 0.55,
+    height: height * 0.5,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
   },
   illustration: {
     width: "100%",
     height: "100%",
-    borderRadius: BorderRadius.xl,
   },
   footer: {
     paddingHorizontal: Spacing.xl,
