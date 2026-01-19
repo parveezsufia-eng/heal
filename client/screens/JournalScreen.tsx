@@ -170,10 +170,33 @@ export default function JournalScreen() {
               style={[styles.quickNavCard, { backgroundColor: Colors.light.cardBlue }]}
               onPress={handleNavigateFocus}
             >
-              <Feather name="target" size={24} color={Colors.light.secondary} />
+              <Feather name="target" size={24} color={Colors.light.softBlue} />
               <ThemedText style={styles.quickNavTitle}>Focus</ThemedText>
               <ThemedText style={[styles.quickNavSubtitle, { color: theme.textSecondary }]}>
                 Stay productive
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          <View style={styles.quickNavRow}>
+            <Pressable
+              style={[styles.quickNavCard, { backgroundColor: Colors.light.cardGreen }]}
+              onPress={() => navigation.navigate("Todo")}
+            >
+              <Feather name="list" size={24} color={Colors.light.success} />
+              <ThemedText style={styles.quickNavTitle}>To-Do</ThemedText>
+              <ThemedText style={[styles.quickNavSubtitle, { color: theme.textSecondary }]}>
+                Manage tasks
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.quickNavCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={() => navigation.navigate("Reminders")}
+            >
+              <Feather name="bell" size={24} color={Colors.light.primary} />
+              <ThemedText style={styles.quickNavTitle}>Reminders</ThemedText>
+              <ThemedText style={[styles.quickNavSubtitle, { color: theme.textSecondary }]}>
+                Wellness alerts
               </ThemedText>
             </Pressable>
           </View>

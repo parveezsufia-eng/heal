@@ -4,6 +4,8 @@ import JournalScreen from "@/screens/JournalScreen";
 import JournalEntryScreen from "@/screens/JournalEntryScreen";
 import HabitScreen from "@/screens/HabitScreen";
 import FocusScreen from "@/screens/FocusScreen";
+import TodoScreen from "@/screens/TodoScreen";
+import RemindersScreen from "@/screens/RemindersScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type JournalStackParamList = {
@@ -11,6 +13,8 @@ export type JournalStackParamList = {
   JournalEntry: { entryId?: string };
   Habit: undefined;
   Focus: undefined;
+  Todo: undefined;
+  Reminders: undefined;
 };
 
 const Stack = createNativeStackNavigator<JournalStackParamList>();
@@ -46,6 +50,20 @@ export default function JournalStackNavigator() {
         component={FocusScreen}
         options={{
           headerTitle: "Focus",
+        }}
+      />
+      <Stack.Screen
+        name="Todo"
+        component={TodoScreen}
+        options={{
+          headerTitle: "To-Do",
+        }}
+      />
+      <Stack.Screen
+        name="Reminders"
+        component={RemindersScreen}
+        options={{
+          headerTitle: "Reminders",
         }}
       />
     </Stack.Navigator>

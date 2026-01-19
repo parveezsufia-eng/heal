@@ -165,6 +165,27 @@ Remember: You're a supportive companion, not a replacement for therapy.`;
     res.json({ recommendation: response.choices[0]?.message?.content });
   });
 
+  // AI Reminder Suggestions
+  app.post("/api/ai/reminder-suggestions", async (req, res) => {
+    const { currentReminders, userRoutine } = req.body;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: `You are a wellness routine advisor. Based on the user's current reminders and daily routine, suggest additional helpful reminders that could improve their mental health and wellbeing. Focus on:
+1. Self-care activities
+2. Mindfulness practices
+3. Healthy habits
+4. Stress management
+5. Sleep hygiene
+Provide practical, actionable reminders with suggested times.` },
+        { role: "user", content: `Current reminders: ${currentReminders?.join(", ") || "none set"}. User's routine: ${userRoutine}. Suggest 3-5 additional wellness reminders that would complement their existing routine.` },
+      ],
+    });
+
+    res.json({ suggestions: response.choices[0]?.message?.content });
+  });
+
   // AI Session Preparation
   app.post("/api/ai/session-prep", async (req, res) => {
     const { therapistName, specialty, topics } = req.body;
