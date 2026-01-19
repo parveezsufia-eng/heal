@@ -57,6 +57,42 @@ const dailyHabits = [
   { id: "4", name: "Water", icon: "droplet", completed: false, streak: 3 },
 ];
 
+const mentalHealthConditions = [
+  { id: "anxiety", label: "Anxiety", icon: "activity" },
+  { id: "depression", label: "Depression", icon: "cloud-rain" },
+  { id: "stress", label: "Stress", icon: "zap" },
+  { id: "insomnia", label: "Insomnia", icon: "moon" },
+  { id: "fatigue", label: "Fatigue", icon: "battery" },
+];
+
+const dietRecipes: Record<string, Array<{ id: string; name: string; benefit: string; ingredients: string; time: string; color: string }>> = {
+  anxiety: [
+    { id: "1", name: "Chamomile Oatmeal Bowl", benefit: "Calms nervous system", ingredients: "Oats, chamomile, honey, almonds", time: "15 min", color: Colors.light.cardPeach },
+    { id: "2", name: "Salmon Avocado Salad", benefit: "Omega-3 for brain health", ingredients: "Salmon, avocado, spinach, lemon", time: "20 min", color: Colors.light.cardBlue },
+    { id: "3", name: "Banana Walnut Smoothie", benefit: "Magnesium & B vitamins", ingredients: "Banana, walnuts, yogurt, honey", time: "5 min", color: Colors.light.cardGreen },
+  ],
+  depression: [
+    { id: "1", name: "Dark Chocolate Berry Bowl", benefit: "Boosts serotonin", ingredients: "Dark chocolate, berries, granola", time: "10 min", color: Colors.light.cardPeach },
+    { id: "2", name: "Turkey Quinoa Bowl", benefit: "Tryptophan for mood", ingredients: "Turkey, quinoa, vegetables", time: "25 min", color: Colors.light.cardBlue },
+    { id: "3", name: "Spinach Egg Scramble", benefit: "Folate & protein", ingredients: "Eggs, spinach, tomatoes, feta", time: "12 min", color: Colors.light.cardGreen },
+  ],
+  stress: [
+    { id: "1", name: "Green Tea Matcha Latte", benefit: "L-theanine relaxation", ingredients: "Matcha, almond milk, honey", time: "5 min", color: Colors.light.cardGreen },
+    { id: "2", name: "Blueberry Yogurt Parfait", benefit: "Antioxidants & probiotics", ingredients: "Yogurt, blueberries, granola", time: "8 min", color: Colors.light.cardBlue },
+    { id: "3", name: "Citrus Kale Salad", benefit: "Vitamin C for cortisol", ingredients: "Kale, oranges, almonds, olive oil", time: "15 min", color: Colors.light.cardPeach },
+  ],
+  insomnia: [
+    { id: "1", name: "Warm Milk & Honey", benefit: "Natural sleep aid", ingredients: "Warm milk, honey, cinnamon", time: "5 min", color: Colors.light.cardPeach },
+    { id: "2", name: "Cherry Almond Smoothie", benefit: "Melatonin boost", ingredients: "Cherries, almonds, milk, vanilla", time: "5 min", color: Colors.light.cardBlue },
+    { id: "3", name: "Banana Peanut Toast", benefit: "Magnesium & tryptophan", ingredients: "Whole grain bread, banana, peanut butter", time: "5 min", color: Colors.light.cardGreen },
+  ],
+  fatigue: [
+    { id: "1", name: "Iron-Rich Lentil Soup", benefit: "Energy from iron", ingredients: "Lentils, spinach, tomatoes, spices", time: "30 min", color: Colors.light.cardPeach },
+    { id: "2", name: "Citrus Energy Salad", benefit: "Vitamin C & B12", ingredients: "Oranges, chicken, quinoa, greens", time: "20 min", color: Colors.light.cardBlue },
+    { id: "3", name: "Chia Seed Pudding", benefit: "Sustained energy", ingredients: "Chia seeds, coconut milk, berries", time: "10 min", color: Colors.light.cardGreen },
+  ],
+};
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -65,6 +101,7 @@ export default function HomeScreen() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [tasks, setTasks] = useState(dailyTasks);
   const [habits, setHabits] = useState(dailyHabits);
+  const [selectedCondition, setSelectedCondition] = useState("anxiety");
 
   const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
@@ -98,6 +135,15 @@ export default function HomeScreen() {
   };
 
   const completedHabits = habits.filter(h => h.completed).length;
+
+  const handleConditionSelect = (conditionId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedCondition(conditionId);
+  };
+
+  const currentRecipes = dietRecipes[selectedCondition] || dietRecipes.anxiety;
 
   const today = new Date();
   const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
@@ -281,6 +327,72 @@ export default function HomeScreen() {
               <ThemedText style={styles.startButtonText}>Start</ThemedText>
             </Pressable>
           </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Diet & Nutrition</ThemedText>
+          <Feather name="heart" size={18} color={Colors.light.primary} />
+        </View>
+        <ThemedText style={[styles.dietSubtitle, { color: theme.textSecondary }]}>
+          Healthy recipes for your mental wellness
+        </ThemedText>
+        
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.conditionScrollContainer}
+        >
+          {mentalHealthConditions.map((condition) => (
+            <Pressable
+              key={condition.id}
+              style={[
+                styles.conditionPill,
+                selectedCondition === condition.id ? styles.conditionPillSelected : { backgroundColor: theme.backgroundSecondary },
+              ]}
+              onPress={() => handleConditionSelect(condition.id)}
+            >
+              <Feather
+                name={condition.icon as any}
+                size={14}
+                color={selectedCondition === condition.id ? "#FFF" : Colors.light.primary}
+              />
+              <ThemedText
+                style={[
+                  styles.conditionText,
+                  selectedCondition === condition.id ? styles.conditionTextSelected : {},
+                ]}
+              >
+                {condition.label}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.recipeList}>
+          {currentRecipes.map((recipe) => (
+            <Pressable key={recipe.id} style={[styles.recipeCard, { backgroundColor: recipe.color }]}>
+              <View style={styles.recipeIconContainer}>
+                <Feather name="coffee" size={24} color={Colors.light.primary} />
+              </View>
+              <View style={styles.recipeContent}>
+                <ThemedText style={styles.recipeName}>{recipe.name}</ThemedText>
+                <ThemedText style={[styles.recipeBenefit, { color: Colors.light.primary }]}>
+                  {recipe.benefit}
+                </ThemedText>
+                <ThemedText style={[styles.recipeIngredients, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {recipe.ingredients}
+                </ThemedText>
+              </View>
+              <View style={styles.recipeTime}>
+                <Feather name="clock" size={12} color={theme.textSecondary} />
+                <ThemedText style={[styles.recipeTimeText, { color: theme.textSecondary }]}>
+                  {recipe.time}
+                </ThemedText>
+              </View>
+            </Pressable>
+          ))}
         </View>
       </View>
       </ScrollView>
@@ -509,5 +621,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "PlusJakartaSans_600SemiBold",
     color: "#FFFFFF",
+  },
+  dietSubtitle: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+    marginBottom: Spacing.md,
+  },
+  conditionScrollContainer: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  conditionPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.xs,
+  },
+  conditionPillSelected: {
+    backgroundColor: Colors.light.primary,
+  },
+  conditionText: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: Colors.light.text,
+  },
+  conditionTextSelected: {
+    color: "#FFFFFF",
+  },
+  recipeList: {
+    gap: Spacing.sm,
+  },
+  recipeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  recipeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recipeContent: {
+    flex: 1,
+  },
+  recipeName: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+    marginBottom: 2,
+  },
+  recipeBenefit: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_500Medium",
+    marginBottom: 2,
+  },
+  recipeIngredients: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  recipeTime: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  recipeTimeText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_400Regular",
   },
 });
