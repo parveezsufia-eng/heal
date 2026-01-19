@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Linking, Modal, TextInput, Platform, ScrollView } from "react-native";
+import React, { useState, useRef, useEffect } from "react";
+import { View, StyleSheet, Pressable, Linking, Modal, TextInput, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -13,6 +13,7 @@ import Animated, {
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { getApiUrl } from "@/lib/query-client";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -28,9 +29,11 @@ export function FloatingButtons() {
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; message: string }[]>([
-    { role: "ai", message: "Hi there! I'm here to support you. How are you feeling today?" },
+    { role: "ai", message: "Hi there! I'm your AI Companion from Heal Here. I'm here to listen and support you. How are you feeling today?" },
   ]);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const emergencyScale = useSharedValue(1);
   const chatScale = useSharedValue(1);
@@ -57,24 +60,48 @@ export function FloatingButtons() {
     setShowChatModal(true);
   };
 
-  const handleSendMessage = () => {
-    if (!chatMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!chatMessage.trim() || isLoading) return;
     
-    setChatHistory((prev) => [...prev, { role: "user", message: chatMessage }]);
-    const userMessage = chatMessage;
+    const userMessage = chatMessage.trim();
     setChatMessage("");
+    setChatHistory((prev) => [...prev, { role: "user", message: userMessage }]);
+    setIsLoading(true);
 
+    // Scroll to bottom after adding user message
     setTimeout(() => {
-      const responses = [
-        "I understand. It's completely valid to feel that way. Would you like to talk more about it?",
-        "Thank you for sharing. Remember, every step you take towards wellness matters.",
-        "I'm here to listen. Take your time, there's no rush.",
-        "That sounds challenging. Would you like me to suggest some calming techniques?",
-        "Your feelings are important. Let's work through this together.",
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      setChatHistory((prev) => [...prev, { role: "ai", message: randomResponse }]);
-    }, 1000);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    try {
+      const apiUrl = new URL("/api/chat", getApiUrl());
+      const response = await fetch(apiUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: chatHistory,
+        }),
+      });
+
+      const data = await response.json();
+      const aiMessage = data.message || "I'm here to listen. Could you tell me more?";
+      setChatHistory((prev) => [...prev, { role: "ai", message: aiMessage }]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "ai", message: "I'm having trouble connecting right now. Please try again in a moment." },
+      ]);
+    } finally {
+      setIsLoading(false);
+      // Scroll to bottom after AI response
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
   };
 
   const callHelpline = () => {
@@ -174,7 +201,12 @@ export function FloatingButtons() {
               </Pressable>
             </View>
 
-            <ScrollView style={styles.chatMessages} contentContainerStyle={styles.chatMessagesContent}>
+            <ScrollView 
+              ref={scrollViewRef}
+              style={styles.chatMessages} 
+              contentContainerStyle={styles.chatMessagesContent}
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
               {chatHistory.map((chat, index) => (
                 <View
                   key={index}
@@ -195,6 +227,15 @@ export function FloatingButtons() {
                   </ThemedText>
                 </View>
               ))}
+              {isLoading ? (
+                <View style={[styles.chatBubble, styles.aiBubble, { backgroundColor: Colors.light.cardPeach }]}>
+                  <View style={styles.typingIndicator}>
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                  </View>
+                </View>
+              ) : null}
             </ScrollView>
 
             <View style={[styles.chatInputContainer, { backgroundColor: theme.backgroundDefault, borderTopColor: theme.border }]}>
@@ -205,12 +246,18 @@ export function FloatingButtons() {
                 value={chatMessage}
                 onChangeText={setChatMessage}
                 onSubmitEditing={handleSendMessage}
+                editable={!isLoading}
               />
               <Pressable
-                style={[styles.sendButton, { backgroundColor: Colors.light.text }]}
+                style={[styles.sendButton, { backgroundColor: isLoading ? theme.textSecondary : Colors.light.text }]}
                 onPress={handleSendMessage}
+                disabled={isLoading}
               >
-                <Feather name="send" size={16} color="#FFF" />
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Feather name="send" size={16} color="#FFF" />
+                )}
               </Pressable>
             </View>
           </View>
@@ -394,5 +441,17 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
+  },
+  typingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 4,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.6,
   },
 });

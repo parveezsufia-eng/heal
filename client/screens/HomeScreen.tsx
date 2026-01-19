@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   Pressable,
   Platform,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -16,6 +19,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { getApiUrl } from "@/lib/query-client";
 
 const moods = [
   { id: "happy", icon: "smile", label: "Happy" },
@@ -65,6 +69,38 @@ const mentalHealthConditions = [
   { id: "fatigue", label: "Fatigue", icon: "battery" },
 ];
 
+interface MealEntry {
+  id: string;
+  mealType: "breakfast" | "lunch" | "dinner" | "snack";
+  name: string;
+  calories: number;
+  time: string;
+  completed: boolean;
+  prescribedBy?: string;
+}
+
+const initialMealPlan: MealEntry[] = [
+  { id: "1", mealType: "breakfast", name: "Oatmeal with Berries", calories: 320, time: "8:00 AM", completed: false, prescribedBy: "Dr. Smith" },
+  { id: "2", mealType: "snack", name: "Greek Yogurt & Almonds", calories: 180, time: "10:30 AM", completed: false, prescribedBy: "Dr. Smith" },
+  { id: "3", mealType: "lunch", name: "Grilled Salmon Salad", calories: 450, time: "1:00 PM", completed: false, prescribedBy: "Dr. Smith" },
+  { id: "4", mealType: "snack", name: "Apple & Peanut Butter", calories: 200, time: "4:00 PM", completed: false },
+  { id: "5", mealType: "dinner", name: "Quinoa Buddha Bowl", calories: 520, time: "7:00 PM", completed: false, prescribedBy: "Dr. Smith" },
+];
+
+const mealTypeIcons: Record<string, string> = {
+  breakfast: "sunrise",
+  lunch: "sun",
+  dinner: "moon",
+  snack: "coffee",
+};
+
+const mealTypeColors: Record<string, string> = {
+  breakfast: Colors.light.cardPeach,
+  lunch: Colors.light.cardBlue,
+  dinner: Colors.light.cardGreen,
+  snack: Colors.light.secondary + "20",
+};
+
 const dietRecipes: Record<string, Array<{ id: string; name: string; benefit: string; ingredients: string; time: string; color: string }>> = {
   anxiety: [
     { id: "1", name: "Chamomile Oatmeal Bowl", benefit: "Calms nervous system", ingredients: "Oats, chamomile, honey, almonds", time: "15 min", color: Colors.light.cardPeach },
@@ -102,6 +138,16 @@ export default function HomeScreen() {
   const [tasks, setTasks] = useState(dailyTasks);
   const [habits, setHabits] = useState(dailyHabits);
   const [selectedCondition, setSelectedCondition] = useState("anxiety");
+  const [mealPlan, setMealPlan] = useState<MealEntry[]>(initialMealPlan);
+  
+  // AI Chat state
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+  const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; message: string }[]>([
+    { role: "ai", message: "Hi there! I'm your AI Companion from Heal Here. I'm here to listen and support you. How are you feeling today?" },
+  ]);
+  const chatScrollViewRef = useRef<ScrollView>(null);
 
   const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
@@ -145,8 +191,72 @@ export default function HomeScreen() {
 
   const currentRecipes = dietRecipes[selectedCondition] || dietRecipes.anxiety;
 
+  const toggleMeal = (id: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setMealPlan(prev =>
+      prev.map(meal =>
+        meal.id === id ? { ...meal, completed: !meal.completed } : meal
+      )
+    );
+  };
+
+  const completedMeals = mealPlan.filter(m => m.completed).length;
+  const totalCalories = mealPlan.reduce((acc, m) => acc + m.calories, 0);
+  const consumedCalories = mealPlan.filter(m => m.completed).reduce((acc, m) => acc + m.calories, 0);
+
   const today = new Date();
   const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
+
+  const handleOpenChat = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setShowChatModal(true);
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!chatMessage.trim() || isLoadingChat) return;
+    
+    const userMessage = chatMessage.trim();
+    setChatMessage("");
+    setChatHistory((prev) => [...prev, { role: "user", message: userMessage }]);
+    setIsLoadingChat(true);
+
+    setTimeout(() => {
+      chatScrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    try {
+      const apiUrl = new URL("/api/chat", getApiUrl());
+      const response = await fetch(apiUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: chatHistory,
+        }),
+      });
+
+      const data = await response.json();
+      const aiMessage = data.message || "I'm here to listen. Could you tell me more?";
+      setChatHistory((prev) => [...prev, { role: "ai", message: aiMessage }]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "ai", message: "I'm having trouble connecting right now. Please try again in a moment." },
+      ]);
+    } finally {
+      setIsLoadingChat(false);
+      setTimeout(() => {
+        chatScrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
@@ -170,7 +280,8 @@ export default function HomeScreen() {
           </Pressable>
           <Pressable 
             style={styles.chatButton}
-            onPress={() => {}}
+            onPress={handleOpenChat}
+            testID="button-open-chat"
           >
             <Feather name="message-circle" size={20} color="#FFF" />
           </Pressable>
@@ -242,6 +353,77 @@ export default function HomeScreen() {
               <View style={styles.streakBadge}>
                 <Feather name="zap" size={10} color={Colors.light.primary} />
                 <ThemedText style={styles.streakText}>{habit.streak}</ThemedText>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Meal Tracker</ThemedText>
+          <View style={styles.mealProgress}>
+            <ThemedText style={[styles.mealProgressText, { color: theme.textSecondary }]}>
+              {completedMeals}/{mealPlan.length} meals
+            </ThemedText>
+          </View>
+        </View>
+        
+        <View style={[styles.calorieCard, { backgroundColor: Colors.light.cardGreen }]}>
+          <View style={styles.calorieInfo}>
+            <ThemedText style={styles.calorieLabel}>Daily Intake</ThemedText>
+            <ThemedText style={styles.calorieValue}>{consumedCalories} / {totalCalories} kcal</ThemedText>
+          </View>
+          <View style={styles.calorieBarContainer}>
+            <View style={[styles.calorieBar, { backgroundColor: theme.border }]}>
+              <View 
+                style={[
+                  styles.calorieBarFill, 
+                  { 
+                    backgroundColor: Colors.light.primary, 
+                    width: `${Math.min((consumedCalories / totalCalories) * 100, 100)}%` 
+                  }
+                ]} 
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.mealList}>
+          {mealPlan.map((meal) => (
+            <Pressable 
+              key={meal.id} 
+              style={[styles.mealCard, { backgroundColor: mealTypeColors[meal.mealType] }]}
+              onPress={() => toggleMeal(meal.id)}
+            >
+              <View style={styles.mealIconContainer}>
+                <Feather name={mealTypeIcons[meal.mealType] as any} size={20} color={Colors.light.primary} />
+              </View>
+              <View style={styles.mealInfo}>
+                <View style={styles.mealHeader}>
+                  <ThemedText style={styles.mealName}>{meal.name}</ThemedText>
+                  {meal.prescribedBy ? (
+                    <View style={styles.prescribedBadge}>
+                      <Feather name="user-check" size={10} color={Colors.light.primary} />
+                      <ThemedText style={styles.prescribedText}>{meal.prescribedBy}</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={styles.mealMeta}>
+                  <ThemedText style={[styles.mealTime, { color: theme.textSecondary }]}>{meal.time}</ThemedText>
+                  <ThemedText style={[styles.mealCalories, { color: Colors.light.primary }]}>{meal.calories} kcal</ThemedText>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.mealCheckbox,
+                  {
+                    backgroundColor: meal.completed ? Colors.light.primary : "transparent",
+                    borderColor: meal.completed ? Colors.light.primary : theme.border,
+                  },
+                ]}
+              >
+                {meal.completed ? <Feather name="check" size={14} color="#FFF" /> : null}
               </View>
             </Pressable>
           ))}
@@ -396,6 +578,96 @@ export default function HomeScreen() {
         </View>
       </View>
       </ScrollView>
+
+      <Modal
+        visible={showChatModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowChatModal(false)}
+      >
+        <View style={styles.chatModalContainer}>
+          <View style={[styles.chatModalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={[styles.chatHeader, { backgroundColor: theme.backgroundDefault, borderBottomColor: theme.border }]}>
+              <View style={styles.chatHeaderLeft}>
+                <View style={[styles.chatAvatar, { backgroundColor: Colors.light.cardPeach }]}>
+                  <Feather name="heart" size={18} color={Colors.light.primary} />
+                </View>
+                <View>
+                  <ThemedText style={styles.chatHeaderTitle}>AI Companion</ThemedText>
+                  <ThemedText style={[styles.chatHeaderSubtitle, { color: theme.textSecondary }]}>
+                    Always here for you
+                  </ThemedText>
+                </View>
+              </View>
+              <Pressable onPress={() => setShowChatModal(false)} style={styles.chatCloseButton} testID="button-close-chat">
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView 
+              ref={chatScrollViewRef}
+              style={styles.chatMessages} 
+              contentContainerStyle={styles.chatMessagesContent}
+              onContentSizeChange={() => chatScrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+              {chatHistory.map((chat, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.chatBubble,
+                    chat.role === "user"
+                      ? [styles.userBubble, { backgroundColor: Colors.light.text }]
+                      : [styles.aiBubble, { backgroundColor: Colors.light.cardPeach }],
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.chatBubbleText,
+                      { color: chat.role === "user" ? "#FFF" : theme.text },
+                    ]}
+                  >
+                    {chat.message}
+                  </ThemedText>
+                </View>
+              ))}
+              {isLoadingChat ? (
+                <View style={[styles.chatBubble, styles.aiBubble, { backgroundColor: Colors.light.cardPeach }]}>
+                  <View style={styles.typingIndicator}>
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                    <View style={[styles.typingDot, { backgroundColor: theme.textSecondary }]} />
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            <View style={[styles.chatInputContainer, { backgroundColor: theme.backgroundDefault, borderTopColor: theme.border }]}>
+              <TextInput
+                style={[styles.chatInput, { color: theme.text, backgroundColor: theme.backgroundSecondary }]}
+                placeholder="Type your message..."
+                placeholderTextColor={theme.textSecondary}
+                value={chatMessage}
+                onChangeText={setChatMessage}
+                onSubmitEditing={handleSendChatMessage}
+                editable={!isLoadingChat}
+                testID="input-chat-message"
+              />
+              <Pressable
+                style={[styles.sendButton, { backgroundColor: isLoadingChat ? theme.textSecondary : Colors.light.text }]}
+                onPress={handleSendChatMessage}
+                disabled={isLoadingChat}
+                testID="button-send-chat"
+              >
+                {isLoadingChat ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Feather name="send" size={16} color="#FFF" />
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -694,5 +966,215 @@ const styles = StyleSheet.create({
   recipeTimeText: {
     fontSize: 11,
     fontFamily: "PlusJakartaSans_400Regular",
+  },
+  mealProgress: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  mealProgressText: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  calorieCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
+  },
+  calorieInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  calorieLabel: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: Colors.light.text,
+  },
+  calorieValue: {
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.light.text,
+  },
+  calorieBarContainer: {
+    marginTop: Spacing.xs,
+  },
+  calorieBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  calorieBarFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  mealList: {
+    gap: Spacing.sm,
+  },
+  mealCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  mealIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  mealHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: 2,
+  },
+  mealName: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+  },
+  prescribedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.light.primary + "20",
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+    gap: 2,
+  },
+  prescribedText: {
+    fontSize: 9,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: Colors.light.primary,
+  },
+  mealMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  mealTime: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  mealCalories: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  mealCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatModalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  chatModalContent: {
+    height: "90%",
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    overflow: "hidden",
+  },
+  chatHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.lg,
+    paddingTop: Spacing.xl,
+    borderBottomWidth: 1,
+  },
+  chatHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  chatAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chatHeaderTitle: {
+    fontWeight: "600",
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  chatHeaderSubtitle: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  chatCloseButton: {
+    padding: Spacing.xs,
+  },
+  chatMessages: {
+    flex: 1,
+  },
+  chatMessagesContent: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  chatBubble: {
+    maxWidth: "80%",
+    padding: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  userBubble: {
+    alignSelf: "flex-end",
+    borderBottomRightRadius: Spacing.xs,
+  },
+  aiBubble: {
+    alignSelf: "flex-start",
+    borderBottomLeftRadius: Spacing.xs,
+  },
+  chatBubbleText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  chatInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    gap: Spacing.sm,
+    borderTopWidth: 1,
+  },
+  chatInput: {
+    flex: 1,
+    height: 44,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.full,
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 4,
+  },
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    opacity: 0.6,
   },
 });

@@ -69,6 +69,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.end();
   });
 
+  // Simple non-streaming chat endpoint for mobile apps
+  const MENTAL_HEALTH_SYSTEM_PROMPT = `You are Heal Here's AI Companion, a warm, empathetic, and supportive mental health assistant. Your role is to:
+
+1. Listen actively and validate the user's feelings without judgment
+2. Offer gentle, evidence-based coping strategies when appropriate
+3. Encourage professional help when needed, while being supportive
+4. Use calming, reassuring language that promotes emotional safety
+5. Never diagnose conditions or replace professional mental health care
+6. Recognize crisis situations and provide emergency resources (988 Suicide & Crisis Lifeline)
+
+Guidelines:
+- Be warm, patient, and understanding
+- Use "I" statements and reflective listening
+- Suggest breathing exercises, grounding techniques, or journaling when helpful
+- Keep responses concise but meaningful (2-4 sentences typically)
+- If someone mentions self-harm or suicide, always provide 988 crisis line info
+- Celebrate small wins and progress
+
+Remember: You're a supportive companion, not a replacement for therapy.`;
+
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { message, history = [] } = req.body;
+
+      const chatMessages: { role: "system" | "user" | "assistant"; content: string }[] = [
+        { role: "system", content: MENTAL_HEALTH_SYSTEM_PROMPT },
+        ...history.map((m: { role: string; message: string }) => ({
+          role: (m.role === "ai" ? "assistant" : "user") as "user" | "assistant",
+          content: m.message,
+        })),
+        { role: "user", content: message },
+      ];
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: chatMessages,
+        max_tokens: 512,
+      });
+
+      const aiMessage = response.choices[0]?.message?.content || "I'm here to listen. Could you tell me more?";
+
+      res.json({ message: aiMessage });
+    } catch (error) {
+      console.error("Error in chat:", error);
+      res.status(500).json({ 
+        error: "Failed to get response",
+        message: "I'm having trouble responding right now. Please try again in a moment."
+      });
+    }
+  });
+
   // AI Mood Analysis
   app.post("/api/ai/analyze-mood", async (req, res) => {
     const { mood, note, sleepHours, stressLevel } = req.body;
