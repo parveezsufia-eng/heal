@@ -162,22 +162,41 @@ export default function TherapistScreen() {
           </ThemedText>
         </View>
 
-        <Pressable 
-          style={[styles.aiMatchCard, { backgroundColor: Colors.light.cardBlue }]}
-          onPress={openMatchModal}
-          testID="button-open-match"
-        >
-          <View style={[styles.aiMatchIcon, { backgroundColor: Colors.light.softBlue + "30" }]}>
-            <Feather name="cpu" size={24} color={Colors.light.softBlue} />
-          </View>
-          <View style={styles.aiMatchInfo}>
-            <ThemedText style={styles.aiMatchTitle}>AI Consultant Match</ThemedText>
-            <ThemedText style={[styles.aiMatchSubtitle, { color: theme.textSecondary }]}>
-              Get personalized therapist recommendations
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color={Colors.light.primary} />
-        </Pressable>
+        <View style={styles.quickActions}>
+          <Pressable 
+            style={[styles.aiMatchCard, { backgroundColor: Colors.light.cardBlue }]}
+            onPress={openMatchModal}
+            testID="button-open-match"
+          >
+            <View style={[styles.aiMatchIcon, { backgroundColor: Colors.light.softBlue + "30" }]}>
+              <Feather name="cpu" size={24} color={Colors.light.softBlue} />
+            </View>
+            <View style={styles.aiMatchInfo}>
+              <ThemedText style={styles.aiMatchTitle}>AI Consultant Match</ThemedText>
+              <ThemedText style={[styles.aiMatchSubtitle, { color: theme.textSecondary }]}>
+                Get personalized recommendations
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={24} color={Colors.light.primary} />
+          </Pressable>
+
+          <Pressable 
+            style={[styles.aiMatchCard, { backgroundColor: Colors.light.cardPeach }]}
+            onPress={() => navigation.navigate("Sessions")}
+            testID="button-my-sessions"
+          >
+            <View style={[styles.aiMatchIcon, { backgroundColor: Colors.light.primary + "30" }]}>
+              <Feather name="calendar" size={24} color={Colors.light.primary} />
+            </View>
+            <View style={styles.aiMatchInfo}>
+              <ThemedText style={styles.aiMatchTitle}>My Sessions</ThemedText>
+              <ThemedText style={[styles.aiMatchSubtitle, { color: theme.textSecondary }]}>
+                View and manage appointments
+              </ThemedText>
+            </View>
+            <Feather name="chevron-right" size={24} color={Colors.light.primary} />
+          </Pressable>
+        </View>
 
         <View style={styles.searchContainer}>
           <View style={[styles.searchBox, { borderColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
@@ -451,7 +470,8 @@ const styles = StyleSheet.create({
   priceLabel: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
   bookButton: { paddingVertical: Spacing.md, borderRadius: BorderRadius.lg, alignItems: "center" },
   bookButtonText: { fontSize: 14, fontFamily: "PlusJakartaSans_600SemiBold" },
-  aiMatchCard: { flexDirection: "row", alignItems: "center", marginHorizontal: Spacing.xl, marginBottom: Spacing.lg, padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
+  quickActions: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.md },
+  aiMatchCard: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.md, padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
   aiMatchIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   aiMatchInfo: { flex: 1 },
   aiMatchTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },

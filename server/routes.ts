@@ -165,6 +165,26 @@ Remember: You're a supportive companion, not a replacement for therapy.`;
     res.json({ recommendation: response.choices[0]?.message?.content });
   });
 
+  // AI Session Preparation
+  app.post("/api/ai/session-prep", async (req, res) => {
+    const { therapistName, specialty, topics } = req.body;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: `You are a mental health session preparation assistant. Help users prepare for their therapy sessions by:
+1. Suggesting how to articulate their concerns clearly
+2. Providing grounding techniques to reduce session anxiety
+3. Recommending questions to ask their therapist
+4. Offering tips for getting the most out of the session
+Be supportive, encouraging, and practical. Keep responses focused and actionable.` },
+        { role: "user", content: `Help me prepare for my therapy session with ${therapistName} (specialty: ${specialty || "general therapy"}). Topics I want to discuss: ${topics || "general wellness check-in"}. Please provide preparation tips, suggested questions, and how to make the most of this session.` },
+      ],
+    });
+
+    res.json({ preparation: response.choices[0]?.message?.content });
+  });
+
   // AI Progress Insights Dashboard
   app.post("/api/ai/progress-insights", async (req, res) => {
     const { sessions, journalEntries, streak, goalsCompleted, habitsConsistency, weeklyMood, achievements, userGoals } = req.body;
@@ -261,7 +281,8 @@ Please provide personalized insights and recommendations for my mental health jo
   app.post("/api/habits/:id/complete", async (req, res) => {
     const habitId = parseInt(req.params.id);
     await db.insert(habitCompletions).values({ habitId });
-    const [habit] = await db.update(habits).set({ streak: db.select().from(habits).where(eq(habits.id, habitId)) }).where(eq(habits.id, habitId)).returning();
+    const [currentHabit] = await db.select().from(habits).where(eq(habits.id, habitId));
+    const [habit] = await db.update(habits).set({ streak: (currentHabit?.streak || 0) + 1 }).where(eq(habits.id, habitId)).returning();
     res.json(habit);
   });
 
