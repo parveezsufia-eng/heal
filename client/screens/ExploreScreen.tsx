@@ -71,6 +71,24 @@ const mentors = [
   { id: "3", name: "Lisa T.", specialty: "Relationships", rating: 4.9 },
 ];
 
+const moodMusic = [
+  { id: "1", title: "Calm & Peaceful", artist: "Relaxing Sounds", youtubeId: "lFcSrYw-ARY", thumbnail: "https://img.youtube.com/vi/lFcSrYw-ARY/mqdefault.jpg", type: "music" as const },
+  { id: "2", title: "Deep Sleep Music", artist: "Sleep Therapy", youtubeId: "1ZYbU82GVz4", thumbnail: "https://img.youtube.com/vi/1ZYbU82GVz4/mqdefault.jpg", type: "music" as const },
+  { id: "3", title: "Focus & Study", artist: "Concentration", youtubeId: "jfKfPfyJRdk", thumbnail: "https://img.youtube.com/vi/jfKfPfyJRdk/mqdefault.jpg", type: "music" as const },
+];
+
+const podcasts = [
+  { id: "1", title: "Mental Health Talk", artist: "Therapy Insights", youtubeId: "sxaTnm4cVjE", thumbnail: "https://img.youtube.com/vi/sxaTnm4cVjE/mqdefault.jpg", type: "podcast" as const },
+  { id: "2", title: "Anxiety & You", artist: "Mind Wellness", youtubeId: "WWloIAQpMcQ", thumbnail: "https://img.youtube.com/vi/WWloIAQpMcQ/mqdefault.jpg", type: "podcast" as const },
+  { id: "3", title: "Mindfulness Daily", artist: "Present Living", youtubeId: "ZToicYcHIOU", thumbnail: "https://img.youtube.com/vi/ZToicYcHIOU/mqdefault.jpg", type: "podcast" as const },
+];
+
+const audioGuides = [
+  { id: "1", title: "Guided Meditation", artist: "Calm Voice", youtubeId: "O-6f5wQXSu8", thumbnail: "https://img.youtube.com/vi/O-6f5wQXSu8/mqdefault.jpg", type: "audio" as const },
+  { id: "2", title: "Breathing Exercise", artist: "Relaxation", youtubeId: "tEmt1Znux58", thumbnail: "https://img.youtube.com/vi/tEmt1Znux58/mqdefault.jpg", type: "audio" as const },
+  { id: "3", title: "Sleep Stories", artist: "Bedtime Tales", youtubeId: "HJMk2VjkK5c", thumbnail: "https://img.youtube.com/vi/HJMk2VjkK5c/mqdefault.jpg", type: "audio" as const },
+];
+
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -133,7 +151,7 @@ export default function ExploreScreen() {
             <ThemedText
               style={[
                 styles.categoryText,
-                selectedCategory === category.id && styles.categoryTextSelected,
+                selectedCategory === category.id ? styles.categoryTextSelected : {},
               ]}
             >
               {category.label}
@@ -197,6 +215,84 @@ export default function ExploreScreen() {
             </Pressable>
           ))}
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Mood Music</ThemedText>
+          <View style={styles.youtubeBadge}>
+            <Feather name="youtube" size={14} color="#FF0000" />
+            <ThemedText style={styles.youtubeBadgeText}>YouTube</ThemedText>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaScrollContainer}>
+          {moodMusic.map((item) => (
+            <Pressable
+              key={item.id}
+              style={[styles.mediaCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={() => navigation.navigate("MusicPlayer", item)}
+            >
+              <Image source={{ uri: item.thumbnail }} style={styles.mediaThumbnail} contentFit="cover" />
+              <View style={styles.playOverlay}>
+                <Feather name="play" size={24} color="#FFF" />
+              </View>
+              <ThemedText style={styles.mediaTitle} numberOfLines={1}>{item.title}</ThemedText>
+              <ThemedText style={[styles.mediaArtist, { color: theme.textSecondary }]} numberOfLines={1}>{item.artist}</ThemedText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Podcasts</ThemedText>
+          <View style={styles.youtubeBadge}>
+            <Feather name="youtube" size={14} color="#FF0000" />
+            <ThemedText style={styles.youtubeBadgeText}>YouTube</ThemedText>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaScrollContainer}>
+          {podcasts.map((item) => (
+            <Pressable
+              key={item.id}
+              style={[styles.mediaCard, { backgroundColor: Colors.light.cardBlue }]}
+              onPress={() => navigation.navigate("MusicPlayer", item)}
+            >
+              <Image source={{ uri: item.thumbnail }} style={styles.mediaThumbnail} contentFit="cover" />
+              <View style={styles.playOverlay}>
+                <Feather name="mic" size={20} color="#FFF" />
+              </View>
+              <ThemedText style={styles.mediaTitle} numberOfLines={1}>{item.title}</ThemedText>
+              <ThemedText style={[styles.mediaArtist, { color: theme.textSecondary }]} numberOfLines={1}>{item.artist}</ThemedText>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Audio Guides</ThemedText>
+          <View style={styles.youtubeBadge}>
+            <Feather name="youtube" size={14} color="#FF0000" />
+            <ThemedText style={styles.youtubeBadgeText}>YouTube</ThemedText>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mediaScrollContainer}>
+          {audioGuides.map((item) => (
+            <Pressable
+              key={item.id}
+              style={[styles.mediaCard, { backgroundColor: Colors.light.cardGreen }]}
+              onPress={() => navigation.navigate("MusicPlayer", item)}
+            >
+              <Image source={{ uri: item.thumbnail }} style={styles.mediaThumbnail} contentFit="cover" />
+              <View style={styles.playOverlay}>
+                <Feather name="headphones" size={20} color="#FFF" />
+              </View>
+              <ThemedText style={styles.mediaTitle} numberOfLines={1}>{item.title}</ThemedText>
+              <ThemedText style={[styles.mediaArtist, { color: theme.textSecondary }]} numberOfLines={1}>{item.artist}</ThemedText>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
     </ScrollView>
   );
@@ -349,5 +445,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "PlusJakartaSans_600SemiBold",
     color: Colors.light.text,
+  },
+  youtubeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    backgroundColor: "#FF000015",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  youtubeBadgeText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: "#FF0000",
+  },
+  mediaScrollContainer: {
+    gap: Spacing.md,
+    paddingRight: Spacing.xl,
+  },
+  mediaCard: {
+    width: 150,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+  },
+  mediaThumbnail: {
+    width: "100%",
+    height: 90,
+  },
+  playOverlay: {
+    position: "absolute",
+    top: 30,
+    left: 55,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mediaTitle: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: Colors.light.text,
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.sm,
+  },
+  mediaArtist: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+    paddingHorizontal: Spacing.sm,
+    paddingBottom: Spacing.sm,
   },
 });
