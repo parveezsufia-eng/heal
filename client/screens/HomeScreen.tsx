@@ -149,11 +149,53 @@ export default function HomeScreen() {
   ]);
   const chatScrollViewRef = useRef<ScrollView>(null);
 
+  // Mood Detector state
+  const [showMoodModal, setShowMoodModal] = useState(false);
+  const [moodNote, setMoodNote] = useState("");
+  const [sleepHours, setSleepHours] = useState("7");
+  const [stressLevel, setStressLevel] = useState(5);
+  const [isAnalyzingMood, setIsAnalyzingMood] = useState(false);
+  const [moodInsight, setMoodInsight] = useState<string | null>(null);
+
   const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setSelectedMood(moodId);
+    setMoodInsight(null);
+    setShowMoodModal(true);
+  };
+
+  const analyzeMood = async () => {
+    if (!selectedMood) return;
+    
+    setIsAnalyzingMood(true);
+    try {
+      const moodLabel = moods.find(m => m.id === selectedMood)?.label || selectedMood;
+      const response = await fetch(new URL("/api/ai/analyze-mood", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mood: moodLabel,
+          note: moodNote,
+          sleepHours: parseFloat(sleepHours) || null,
+          stressLevel,
+        }),
+      });
+      const data = await response.json();
+      setMoodInsight(data.analysis);
+    } catch (error) {
+      console.error("Mood analysis error:", error);
+      setMoodInsight("I'm having trouble analyzing right now. Remember, it's okay to not be okay. Take a moment to breathe deeply.");
+    } finally {
+      setIsAnalyzingMood(false);
+    }
+  };
+
+  const closeMoodModal = () => {
+    setShowMoodModal(false);
+    setMoodNote("");
+    setMoodInsight(null);
   };
 
   const toggleTask = (id: string) => {
@@ -668,6 +710,147 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={showMoodModal}
+        transparent
+        animationType="slide"
+        onRequestClose={closeMoodModal}
+      >
+        <View style={styles.chatModalContainer}>
+          <View style={[styles.moodModalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={[styles.chatHeader, { backgroundColor: theme.backgroundDefault, borderBottomColor: theme.border }]}>
+              <View style={styles.chatHeaderLeft}>
+                <View style={[styles.chatAvatar, { backgroundColor: Colors.light.cardBlue }]}>
+                  <Feather name="activity" size={18} color={Colors.light.softBlue} />
+                </View>
+                <View>
+                  <ThemedText style={styles.chatHeaderTitle}>AI Mood Detector</ThemedText>
+                  <ThemedText style={[styles.chatHeaderSubtitle, { color: theme.textSecondary }]}>
+                    Personalized insights
+                  </ThemedText>
+                </View>
+              </View>
+              <Pressable onPress={closeMoodModal} style={styles.chatCloseButton} testID="button-close-mood">
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.moodModalScroll} contentContainerStyle={styles.moodModalScrollContent}>
+              <View style={[styles.moodSelectedCard, { backgroundColor: Colors.light.cardPeach }]}>
+                <Feather 
+                  name={moods.find(m => m.id === selectedMood)?.icon as any || "meh"} 
+                  size={32} 
+                  color={Colors.light.primary} 
+                />
+                <View style={styles.moodSelectedInfo}>
+                  <ThemedText style={styles.moodSelectedLabel}>You're feeling</ThemedText>
+                  <ThemedText style={styles.moodSelectedTitle}>
+                    {moods.find(m => m.id === selectedMood)?.label || "Unknown"}
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.moodFormSection}>
+                <ThemedText style={styles.moodFormLabel}>How did you sleep last night?</ThemedText>
+                <View style={styles.sleepInputRow}>
+                  {["4", "5", "6", "7", "8", "9+"].map((hours) => (
+                    <Pressable
+                      key={hours}
+                      style={[
+                        styles.sleepOption,
+                        { 
+                          backgroundColor: sleepHours === hours ? Colors.light.primary : theme.backgroundSecondary,
+                          borderColor: sleepHours === hours ? Colors.light.primary : theme.border,
+                        },
+                      ]}
+                      onPress={() => setSleepHours(hours)}
+                      testID={`sleep-option-${hours}`}
+                    >
+                      <ThemedText style={[styles.sleepOptionText, { color: sleepHours === hours ? "#FFF" : theme.text }]}>
+                        {hours}h
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.moodFormSection}>
+                <ThemedText style={styles.moodFormLabel}>
+                  Stress level: {stressLevel}/10
+                </ThemedText>
+                <View style={styles.stressSlider} accessibilityRole="radiogroup">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+                    <Pressable
+                      key={level}
+                      style={[
+                        styles.stressOption,
+                        {
+                          backgroundColor: level <= stressLevel 
+                            ? (level <= 3 ? "#4CAF50" : level <= 6 ? Colors.light.primary : "#E85D5D")
+                            : theme.backgroundSecondary,
+                        },
+                      ]}
+                      onPress={() => setStressLevel(level)}
+                      testID={`stress-option-${level}`}
+                      accessibilityLabel={`Stress level ${level}`}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: level === stressLevel }}
+                    >
+                      <View style={styles.stressOptionInner} />
+                    </Pressable>
+                  ))}
+                </View>
+                <View style={styles.stressLabels}>
+                  <ThemedText style={[styles.stressLabelText, { color: theme.textSecondary }]}>Low</ThemedText>
+                  <ThemedText style={[styles.stressLabelText, { color: theme.textSecondary }]}>High</ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.moodFormSection}>
+                <ThemedText style={styles.moodFormLabel}>What's on your mind? (optional)</ThemedText>
+                <TextInput
+                  style={[styles.moodNoteInput, { color: theme.text, backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+                  placeholder="Share anything you'd like..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={moodNote}
+                  onChangeText={setMoodNote}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  testID="input-mood-note"
+                />
+              </View>
+
+              <Pressable
+                style={[styles.analyzeButton, { backgroundColor: isAnalyzingMood ? theme.textSecondary : Colors.light.primary }]}
+                onPress={analyzeMood}
+                disabled={isAnalyzingMood}
+                testID="button-analyze-mood"
+              >
+                {isAnalyzingMood ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Feather name="zap" size={18} color="#FFF" />
+                    <ThemedText style={styles.analyzeButtonText}>Get AI Insights</ThemedText>
+                  </>
+                )}
+              </Pressable>
+
+              {moodInsight ? (
+                <View style={[styles.insightCard, { backgroundColor: Colors.light.cardGreen }]}>
+                  <View style={styles.insightHeader}>
+                    <Feather name="sun" size={20} color={Colors.light.primary} />
+                    <ThemedText style={styles.insightTitle}>Your Personalized Insights</ThemedText>
+                  </View>
+                  <ThemedText style={styles.insightText}>{moodInsight}</ThemedText>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1176,5 +1359,131 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     opacity: 0.6,
+  },
+  moodModalContent: {
+    height: "85%",
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    overflow: "hidden",
+  },
+  moodModalScroll: {
+    flex: 1,
+  },
+  moodModalScrollContent: {
+    padding: Spacing.lg,
+    gap: Spacing.lg,
+    paddingBottom: Spacing.xl * 2,
+  },
+  moodSelectedCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.lg,
+  },
+  moodSelectedInfo: {
+    flex: 1,
+  },
+  moodSelectedLabel: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_400Regular",
+    color: Colors.light.textSecondary,
+  },
+  moodSelectedTitle: {
+    fontSize: 22,
+    fontFamily: "PlayfairDisplay_700Bold",
+    color: Colors.light.text,
+  },
+  moodFormSection: {
+    gap: Spacing.sm,
+  },
+  moodFormLabel: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+    marginBottom: Spacing.xs,
+  },
+  sleepInputRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  sleepOption: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sleepOptionText: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  stressSlider: {
+    flexDirection: "row",
+    gap: 4,
+  },
+  stressOption: {
+    flex: 1,
+    height: 28,
+    borderRadius: BorderRadius.sm,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stressOptionInner: {
+    width: "100%",
+    height: "100%",
+  },
+  stressLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: Spacing.xs,
+  },
+  stressLabelText: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  moodNoteInput: {
+    minHeight: 80,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+  },
+  analyzeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.sm,
+  },
+  analyzeButtonText: {
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#FFF",
+  },
+  insightCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  insightHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  insightTitle: {
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+  },
+  insightText: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+    color: Colors.light.text,
+    lineHeight: 24,
   },
 });
