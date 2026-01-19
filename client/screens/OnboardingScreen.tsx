@@ -92,12 +92,10 @@ export default function OnboardingScreen() {
   const renderItem = ({ item, index }: { item: (typeof onboardingData)[0]; index: number }) => (
     <View style={[styles.slide, { width }]}>
       <View style={styles.illustrationContainer}>
-        <View style={[styles.peachBlob, { backgroundColor: Colors.light.peach }]} />
-        <View style={[styles.blueBlob, { backgroundColor: Colors.light.secondary + "40" }]} />
         <Image
           source={item.image}
           style={styles.illustration}
-          contentFit="contain"
+          contentFit="cover"
           transition={300}
         />
       </View>
@@ -213,34 +211,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   illustrationContainer: {
-    width: width * 0.85,
-    height: width * 0.85,
+    width: width,
+    height: height * 0.55,
     alignItems: "center",
     justifyContent: "center",
-    position: "relative",
-  },
-  peachBlob: {
-    position: "absolute",
-    width: width * 0.5,
-    height: width * 0.5,
-    borderRadius: width * 0.25,
-    bottom: "10%",
-    left: "5%",
-    transform: [{ scaleX: 1.3 }, { rotate: "-15deg" }],
-  },
-  blueBlob: {
-    position: "absolute",
-    width: width * 0.35,
-    height: width * 0.35,
-    borderRadius: width * 0.2,
-    top: "15%",
-    right: "10%",
-    transform: [{ scaleY: 1.2 }],
   },
   illustration: {
-    width: "90%",
-    height: "90%",
-    zIndex: 1,
+    width: "100%",
+    height: "100%",
+    borderRadius: BorderRadius.xl,
   },
   footer: {
     paddingHorizontal: Spacing.xl,
