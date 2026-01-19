@@ -50,6 +50,13 @@ const dailyTasks = [
   { id: "3", text: "Evening journaling", completed: false, time: "8:00 PM" },
 ];
 
+const dailyHabits = [
+  { id: "1", name: "Meditation", icon: "sun", completed: true, streak: 7 },
+  { id: "2", name: "Exercise", icon: "activity", completed: false, streak: 5 },
+  { id: "3", name: "Read", icon: "book", completed: true, streak: 12 },
+  { id: "4", name: "Water", icon: "droplet", completed: false, streak: 3 },
+];
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -57,6 +64,7 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [tasks, setTasks] = useState(dailyTasks);
+  const [habits, setHabits] = useState(dailyHabits);
 
   const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
@@ -75,6 +83,21 @@ export default function HomeScreen() {
       )
     );
   };
+
+  const toggleHabit = (id: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setHabits(prev =>
+      prev.map(habit =>
+        habit.id === id
+          ? { ...habit, completed: !habit.completed, streak: habit.completed ? habit.streak - 1 : habit.streak + 1 }
+          : habit
+      )
+    );
+  };
+
+  const completedHabits = habits.filter(h => h.completed).length;
 
   const today = new Date();
   const greeting = today.getHours() < 12 ? "Good Morning" : today.getHours() < 17 ? "Good Afternoon" : "Good Evening";
@@ -140,6 +163,47 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
+          <ThemedText style={styles.sectionTitle}>Habit Tracker</ThemedText>
+          <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            {completedHabits}/{habits.length} done
+          </ThemedText>
+        </View>
+        <View style={styles.habitsRow}>
+          {habits.map((habit) => (
+            <Pressable
+              key={habit.id}
+              style={[
+                styles.habitItem,
+                { backgroundColor: habit.completed ? Colors.light.primary + "15" : theme.backgroundSecondary },
+              ]}
+              onPress={() => toggleHabit(habit.id)}
+            >
+              <View
+                style={[
+                  styles.habitCheckbox,
+                  {
+                    backgroundColor: habit.completed ? Colors.light.primary : "transparent",
+                    borderColor: habit.completed ? Colors.light.primary : theme.border,
+                  },
+                ]}
+              >
+                {habit.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
+              </View>
+              <Feather name={habit.icon as any} size={18} color={habit.completed ? Colors.light.primary : theme.textSecondary} />
+              <ThemedText style={[styles.habitName, { color: habit.completed ? Colors.light.primary : theme.text }]}>
+                {habit.name}
+              </ThemedText>
+              <View style={styles.streakBadge}>
+                <Feather name="zap" size={10} color={Colors.light.primary} />
+                <ThemedText style={styles.streakText}>{habit.streak}</ThemedText>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
           <ThemedText style={styles.sectionTitle}>Daily Goals</ThemedText>
           <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
             1/5 selected
@@ -187,7 +251,7 @@ export default function HomeScreen() {
                 <ThemedText
                   style={[
                     styles.taskText,
-                    task.completed && { textDecorationLine: "line-through", color: theme.textSecondary },
+                    task.completed ? { textDecorationLine: "line-through" as const, color: theme.textSecondary } : {},
                   ]}
                 >
                   {task.text}
@@ -311,6 +375,41 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.primary + "20",
     borderWidth: 1.5,
     borderColor: Colors.light.primary,
+  },
+  habitsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  habitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.xs,
+  },
+  habitCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  habitName: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_500Medium",
+  },
+  streakBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  streakText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.primary,
   },
   goalsGrid: {
     flexDirection: "row",

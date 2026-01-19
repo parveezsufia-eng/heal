@@ -126,6 +126,20 @@ export default function JournalScreen() {
     </View>
   );
 
+  const handleNavigateHabit = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    navigation.navigate("Habit");
+  };
+
+  const handleNavigateFocus = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    navigation.navigate("Focus");
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       {isLocked ? (
@@ -140,6 +154,31 @@ export default function JournalScreen() {
               <Feather name="plus" size={22} color={theme.text} />
             </Pressable>
           </View>
+
+          <View style={styles.quickNavRow}>
+            <Pressable
+              style={[styles.quickNavCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={handleNavigateHabit}
+            >
+              <Feather name="check-circle" size={24} color={Colors.light.primary} />
+              <ThemedText style={styles.quickNavTitle}>Habits</ThemedText>
+              <ThemedText style={[styles.quickNavSubtitle, { color: theme.textSecondary }]}>
+                Track daily habits
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.quickNavCard, { backgroundColor: Colors.light.cardBlue }]}
+              onPress={handleNavigateFocus}
+            >
+              <Feather name="target" size={24} color={Colors.light.secondary} />
+              <ThemedText style={styles.quickNavTitle}>Focus</ThemedText>
+              <ThemedText style={[styles.quickNavSubtitle, { color: theme.textSecondary }]}>
+                Stay productive
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          <ThemedText style={styles.entriesLabel}>Recent Entries</ThemedText>
           <FlatList
             data={entries}
             renderItem={renderEntry}
@@ -198,7 +237,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   headerTitle: {
     fontSize: 28,
@@ -212,6 +251,36 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.backgroundSecondary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  quickNavRow: {
+    flexDirection: "row",
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+  },
+  quickNavCard: {
+    flex: 1,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    alignItems: "center",
+  },
+  quickNavTitle: {
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+    marginTop: Spacing.sm,
+  },
+  quickNavSubtitle: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
+    marginTop: Spacing.xs,
+  },
+  entriesLabel: {
+    fontSize: 18,
+    fontFamily: "PlayfairDisplay_400Regular",
+    color: Colors.light.text,
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   entryCard: {
     flexDirection: "row",
