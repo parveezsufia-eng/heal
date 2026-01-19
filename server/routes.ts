@@ -165,6 +165,36 @@ Remember: You're a supportive companion, not a replacement for therapy.`;
     res.json({ recommendation: response.choices[0]?.message?.content });
   });
 
+  // AI Progress Insights Dashboard
+  app.post("/api/ai/progress-insights", async (req, res) => {
+    const { sessions, journalEntries, streak, goalsCompleted, habitsConsistency, weeklyMood, achievements, userGoals } = req.body;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: `You are a supportive wellness progress analyst. Analyze the user's mental health journey data and provide:
+1. Recognition of their achievements and progress
+2. Patterns you notice in their mood data
+3. Personalized recommendations for continued growth
+4. Encouragement and motivation based on their goals
+Be warm, supportive, and specific to their data. Focus on positive reinforcement while offering gentle suggestions for improvement.` },
+        { role: "user", content: `Analyze my wellness journey:
+- Total therapy sessions: ${sessions}
+- Journal entries written: ${journalEntries}
+- Current streak: ${streak} days
+- Goals completed: ${goalsCompleted}%
+- Habits consistency: ${habitsConsistency}%
+- Weekly mood scores (Mon-Sun): ${weeklyMood?.join(", ") || "not tracked"}
+- Achievements earned: ${achievements?.join(", ") || "none yet"}
+- My wellness goals: ${userGoals}
+
+Please provide personalized insights and recommendations for my mental health journey.` },
+      ],
+    });
+
+    res.json({ insights: response.choices[0]?.message?.content });
+  });
+
   // AI Habit Coach
   app.post("/api/ai/habit-coach", async (req, res) => {
     const { habit, currentStreak, challenges } = req.body;

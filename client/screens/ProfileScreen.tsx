@@ -1,5 +1,5 @@
-import React from "react";
-import { View, StyleSheet, ScrollView, Pressable, Platform } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Platform, Modal, ActivityIndicator, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -13,6 +13,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
+import { getApiUrl } from "@/lib/query-client";
 
 type ProfileNavigationProp = NativeStackNavigationProp<ProfileStackParamList>;
 
@@ -46,9 +47,49 @@ export default function ProfileScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<ProfileNavigationProp>();
 
+  const [showDashboardModal, setShowDashboardModal] = useState(false);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [aiInsights, setAiInsights] = useState("");
+  const [userGoals, setUserGoals] = useState("");
+
   const handleSettingsPress = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate("Settings");
+  };
+
+  const openDashboardModal = () => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowDashboardModal(true);
+  };
+
+  const getAIInsights = async () => {
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsLoadingInsights(true);
+    try {
+      const progressData = {
+        sessions: 12,
+        journalEntries: 45,
+        streak: 7,
+        goalsCompleted: 75,
+        habitsConsistency: 88,
+        weeklyMood: weeklyData.map(d => d.value),
+        achievements: achievements.map(a => a.label),
+        userGoals: userGoals || "general wellness improvement",
+      };
+      const response = await fetch(new URL("/api/ai/progress-insights", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(progressData),
+      });
+      const data = await response.json();
+      if (data.insights) {
+        setAiInsights(data.insights);
+      }
+    } catch (error) {
+      console.error("AI insights error:", error);
+    } finally {
+      setIsLoadingInsights(false);
+    }
   };
 
   return (
@@ -153,6 +194,112 @@ export default function ProfileScreen() {
           </View>
         </View>
       </View>
+
+      <Pressable 
+        style={[styles.aiDashboardCard, { backgroundColor: Colors.light.cardBlue }]}
+        onPress={openDashboardModal}
+        testID="button-open-dashboard"
+      >
+        <View style={[styles.aiDashboardIcon, { backgroundColor: Colors.light.softBlue + "30" }]}>
+          <Feather name="pie-chart" size={24} color={Colors.light.softBlue} />
+        </View>
+        <View style={styles.aiDashboardInfo}>
+          <ThemedText style={styles.aiDashboardTitle}>AI Progress Dashboard</ThemedText>
+          <ThemedText style={[styles.aiDashboardSubtitle, { color: theme.textSecondary }]}>
+            Get personalized insights and recommendations
+          </ThemedText>
+        </View>
+        <Feather name="chevron-right" size={24} color={Colors.light.primary} />
+      </Pressable>
+
+      <Modal
+        visible={showDashboardModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDashboardModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={[styles.modalHeader, { backgroundColor: theme.backgroundDefault, borderBottomColor: theme.border }]}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={[styles.modalAvatar, { backgroundColor: Colors.light.cardBlue }]}>
+                  <Feather name="pie-chart" size={18} color={Colors.light.softBlue} />
+                </View>
+                <View>
+                  <ThemedText style={styles.modalHeaderTitle}>AI Progress Dashboard</ThemedText>
+                  <ThemedText style={[styles.modalHeaderSubtitle, { color: theme.textSecondary }]}>
+                    Your wellness journey insights
+                  </ThemedText>
+                </View>
+              </View>
+              <Pressable onPress={() => setShowDashboardModal(false)} style={styles.modalCloseButton} testID="button-close-dashboard">
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+              <View style={[styles.summaryCard, { backgroundColor: Colors.light.cardPeach }]}>
+                <ThemedText style={styles.summaryTitle}>Your Progress Summary</ThemedText>
+                <View style={styles.summaryGrid}>
+                  <View style={styles.summaryItem}>
+                    <ThemedText style={styles.summaryValue}>12</ThemedText>
+                    <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>Sessions</ThemedText>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <ThemedText style={styles.summaryValue}>45</ThemedText>
+                    <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>Entries</ThemedText>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <ThemedText style={styles.summaryValue}>7</ThemedText>
+                    <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>Day Streak</ThemedText>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.formSection}>
+                <ThemedText style={styles.formLabel}>What are your wellness goals?</ThemedText>
+                <TextInput
+                  style={[styles.formInput, { color: theme.text, backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+                  placeholder="e.g., reduce anxiety, improve sleep, build healthy habits..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={userGoals}
+                  onChangeText={setUserGoals}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  testID="input-user-goals"
+                />
+              </View>
+
+              <Pressable
+                style={[styles.insightsButton, { backgroundColor: isLoadingInsights ? theme.textSecondary : Colors.light.primary }]}
+                onPress={getAIInsights}
+                disabled={isLoadingInsights}
+                testID="button-get-insights"
+              >
+                {isLoadingInsights ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Feather name="zap" size={18} color="#FFF" />
+                    <ThemedText style={styles.insightsButtonText}>Get AI Insights</ThemedText>
+                  </>
+                )}
+              </Pressable>
+
+              {aiInsights ? (
+                <View style={[styles.insightsCard, { backgroundColor: Colors.light.cardGreen }]}>
+                  <View style={styles.insightsHeader}>
+                    <Feather name="award" size={20} color={Colors.light.primary} />
+                    <ThemedText style={styles.insightsTitle}>Your Personalized Insights</ThemedText>
+                  </View>
+                  <ThemedText style={styles.insightsText}>{aiInsights}</ThemedText>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -190,4 +337,34 @@ const styles = StyleSheet.create({
   progressPercent: { fontSize: 14, fontFamily: "PlusJakartaSans_600SemiBold" },
   progressBarBg: { height: 8, borderRadius: 4, overflow: "hidden" },
   progressBarFill: { height: "100%", borderRadius: 4 },
+  aiDashboardCard: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.lg, padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
+  aiDashboardIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  aiDashboardInfo: { flex: 1 },
+  aiDashboardTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  aiDashboardSubtitle: { fontSize: 13, fontFamily: "PlusJakartaSans_400Regular" },
+  modalContainer: { flex: 1, justifyContent: "flex-end" },
+  modalContent: { height: "85%", borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl, overflow: "hidden" },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: Spacing.lg, paddingTop: Spacing.xl, borderBottomWidth: 1 },
+  modalHeaderLeft: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
+  modalAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  modalHeaderTitle: { fontWeight: "600", fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold" },
+  modalHeaderSubtitle: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
+  modalCloseButton: { padding: Spacing.xs },
+  modalScroll: { flex: 1 },
+  modalScrollContent: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xl * 2 },
+  summaryCard: { padding: Spacing.lg, borderRadius: BorderRadius.lg },
+  summaryTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text, marginBottom: Spacing.md },
+  summaryGrid: { flexDirection: "row", justifyContent: "space-around" },
+  summaryItem: { alignItems: "center" },
+  summaryValue: { fontSize: 24, fontFamily: "PlusJakartaSans_700Bold", color: Colors.light.primary },
+  summaryLabel: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
+  formSection: { gap: Spacing.sm },
+  formLabel: { fontSize: 15, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  formInput: { minHeight: 80, padding: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, fontSize: 15, fontFamily: "PlusJakartaSans_400Regular" },
+  insightsButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: Spacing.sm, paddingVertical: Spacing.lg, borderRadius: BorderRadius.lg },
+  insightsButtonText: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: "#FFF" },
+  insightsCard: { padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
+  insightsHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
+  insightsTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  insightsText: { fontSize: 15, fontFamily: "PlusJakartaSans_400Regular", color: Colors.light.text, lineHeight: 24 },
 });
