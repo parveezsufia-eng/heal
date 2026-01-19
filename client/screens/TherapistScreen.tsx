@@ -7,6 +7,8 @@ import {
   Platform,
   ScrollView,
   TextInput,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -20,6 +22,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { TherapistStackParamList } from "@/navigation/TherapistStackNavigator";
+import { getApiUrl } from "@/lib/query-client";
 
 type TherapistNavigationProp = NativeStackNavigationProp<TherapistStackParamList>;
 
@@ -78,6 +81,48 @@ export default function TherapistScreen() {
   const navigation = useNavigation<TherapistNavigationProp>();
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // AI Consultant Match state
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchConcerns, setMatchConcerns] = useState("");
+  const [matchPreferences, setMatchPreferences] = useState("");
+  const [isLoadingMatch, setIsLoadingMatch] = useState(false);
+  const [matchResult, setMatchResult] = useState<string | null>(null);
+
+  const getAIMatch = async () => {
+    const concerns = selectedIssues.length > 0 
+      ? selectedIssues.join(", ") + (matchConcerns ? `. ${matchConcerns}` : "")
+      : matchConcerns || "General mental health support";
+    
+    setIsLoadingMatch(true);
+    try {
+      const response = await fetch(new URL("/api/ai/consultant-match", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          concerns,
+          preferences: matchPreferences,
+        }),
+      });
+      const data = await response.json();
+      setMatchResult(data.recommendation);
+    } catch (error) {
+      console.error("Match error:", error);
+      setMatchResult("Based on your needs, we recommend consulting with a licensed therapist who specializes in your areas of concern. Look for someone with experience in cognitive behavioral therapy (CBT) and a warm, supportive approach.");
+    } finally {
+      setIsLoadingMatch(false);
+    }
+  };
+
+  const openMatchModal = () => {
+    setMatchResult(null);
+    setMatchConcerns("");
+    setMatchPreferences("");
+    setShowMatchModal(true);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   const handleIssuePress = (issueLabel: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -116,6 +161,23 @@ export default function TherapistScreen() {
             Select your concerns to find the right support
           </ThemedText>
         </View>
+
+        <Pressable 
+          style={[styles.aiMatchCard, { backgroundColor: Colors.light.cardBlue }]}
+          onPress={openMatchModal}
+          testID="button-open-match"
+        >
+          <View style={[styles.aiMatchIcon, { backgroundColor: Colors.light.softBlue + "30" }]}>
+            <Feather name="cpu" size={24} color={Colors.light.softBlue} />
+          </View>
+          <View style={styles.aiMatchInfo}>
+            <ThemedText style={styles.aiMatchTitle}>AI Consultant Match</ThemedText>
+            <ThemedText style={[styles.aiMatchSubtitle, { color: theme.textSecondary }]}>
+              Get personalized therapist recommendations
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color={Colors.light.primary} />
+        </Pressable>
 
         <View style={styles.searchContainer}>
           <View style={[styles.searchBox, { borderColor: theme.border, backgroundColor: theme.backgroundSecondary }]}>
@@ -250,6 +312,99 @@ export default function TherapistScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showMatchModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMatchModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundRoot }]}>
+            <View style={[styles.modalHeader, { backgroundColor: theme.backgroundDefault, borderBottomColor: theme.border }]}>
+              <View style={styles.modalHeaderLeft}>
+                <View style={[styles.modalAvatar, { backgroundColor: Colors.light.cardBlue }]}>
+                  <Feather name="cpu" size={18} color={Colors.light.softBlue} />
+                </View>
+                <View>
+                  <ThemedText style={styles.modalHeaderTitle}>AI Consultant Match</ThemedText>
+                  <ThemedText style={[styles.modalHeaderSubtitle, { color: theme.textSecondary }]}>
+                    Find your ideal therapist
+                  </ThemedText>
+                </View>
+              </View>
+              <Pressable onPress={() => setShowMatchModal(false)} style={styles.modalCloseButton} testID="button-close-match">
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+              {selectedIssues.length > 0 ? (
+                <View style={[styles.concernsCard, { backgroundColor: Colors.light.cardPeach }]}>
+                  <ThemedText style={styles.concernsLabel}>Your selected concerns:</ThemedText>
+                  <ThemedText style={styles.concernsText}>{selectedIssues.join(", ")}</ThemedText>
+                </View>
+              ) : null}
+
+              <View style={styles.formSection}>
+                <ThemedText style={styles.formLabel}>Tell us more about your concerns</ThemedText>
+                <TextInput
+                  style={[styles.formInput, { color: theme.text, backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+                  placeholder="e.g., I've been feeling anxious about work..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={matchConcerns}
+                  onChangeText={setMatchConcerns}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  testID="input-match-concerns"
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <ThemedText style={styles.formLabel}>Any preferences for your therapist?</ThemedText>
+                <TextInput
+                  style={[styles.formInput, { color: theme.text, backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
+                  placeholder="e.g., female therapist, specializes in CBT..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={matchPreferences}
+                  onChangeText={setMatchPreferences}
+                  multiline
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                  testID="input-match-preferences"
+                />
+              </View>
+
+              <Pressable
+                style={[styles.matchButton, { backgroundColor: isLoadingMatch ? theme.textSecondary : Colors.light.primary }]}
+                onPress={getAIMatch}
+                disabled={isLoadingMatch}
+                testID="button-get-match"
+              >
+                {isLoadingMatch ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <>
+                    <Feather name="zap" size={18} color="#FFF" />
+                    <ThemedText style={styles.matchButtonText}>Find My Match</ThemedText>
+                  </>
+                )}
+              </Pressable>
+
+              {matchResult ? (
+                <View style={[styles.resultCard, { backgroundColor: Colors.light.cardGreen }]}>
+                  <View style={styles.resultHeader}>
+                    <Feather name="check-circle" size={20} color={Colors.light.primary} />
+                    <ThemedText style={styles.resultTitle}>Your Recommendations</ThemedText>
+                  </View>
+                  <ThemedText style={styles.resultText}>{matchResult}</ThemedText>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -296,4 +451,31 @@ const styles = StyleSheet.create({
   priceLabel: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
   bookButton: { paddingVertical: Spacing.md, borderRadius: BorderRadius.lg, alignItems: "center" },
   bookButtonText: { fontSize: 14, fontFamily: "PlusJakartaSans_600SemiBold" },
+  aiMatchCard: { flexDirection: "row", alignItems: "center", marginHorizontal: Spacing.xl, marginBottom: Spacing.lg, padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
+  aiMatchIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  aiMatchInfo: { flex: 1 },
+  aiMatchTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  aiMatchSubtitle: { fontSize: 13, fontFamily: "PlusJakartaSans_400Regular" },
+  modalContainer: { flex: 1, justifyContent: "flex-end" },
+  modalContent: { height: "85%", borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl, overflow: "hidden" },
+  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: Spacing.lg, paddingTop: Spacing.xl, borderBottomWidth: 1 },
+  modalHeaderLeft: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
+  modalAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  modalHeaderTitle: { fontWeight: "600", fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold" },
+  modalHeaderSubtitle: { fontSize: 12, fontFamily: "PlusJakartaSans_400Regular" },
+  modalCloseButton: { padding: Spacing.xs },
+  modalScroll: { flex: 1 },
+  modalScrollContent: { padding: Spacing.lg, gap: Spacing.lg, paddingBottom: Spacing.xl * 2 },
+  concernsCard: { padding: Spacing.lg, borderRadius: BorderRadius.lg },
+  concernsLabel: { fontSize: 13, fontFamily: "PlusJakartaSans_500Medium", color: Colors.light.textSecondary, marginBottom: Spacing.xs },
+  concernsText: { fontSize: 15, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  formSection: { gap: Spacing.sm },
+  formLabel: { fontSize: 15, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  formInput: { minHeight: 80, padding: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1, fontSize: 15, fontFamily: "PlusJakartaSans_400Regular" },
+  matchButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: Spacing.sm, paddingVertical: Spacing.lg, borderRadius: BorderRadius.lg },
+  matchButtonText: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: "#FFF" },
+  resultCard: { padding: Spacing.lg, borderRadius: BorderRadius.lg, gap: Spacing.md },
+  resultHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
+  resultTitle: { fontSize: 16, fontFamily: "PlusJakartaSans_600SemiBold", color: Colors.light.text },
+  resultText: { fontSize: 15, fontFamily: "PlusJakartaSans_400Regular", color: Colors.light.text, lineHeight: 24 },
 });
