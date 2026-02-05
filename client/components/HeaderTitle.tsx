@@ -1,8 +1,4 @@
-import React from "react";
-import { View, StyleSheet, Image } from "react-native";
-
-import { ThemedText } from "@/components/ThemedText";
-import { Spacing, Colors } from "@/constants/theme";
+import { SunflowerLogo } from "./SunflowerLogo";
 
 interface HeaderTitleProps {
   title: string;
@@ -11,11 +7,7 @@ interface HeaderTitleProps {
 export function HeaderTitle({ title }: HeaderTitleProps) {
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/icon.png")}
-        style={styles.icon}
-        resizeMode="contain"
-      />
+      <SunflowerLogo size={28} />
       <ThemedText style={styles.title}>{title}</ThemedText>
     </View>
   );

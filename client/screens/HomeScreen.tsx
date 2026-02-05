@@ -23,6 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import type { HomeStackParamList } from "@/navigation/HomeStackNavigator";
+import { SunflowerLogo } from "@/components/SunflowerLogo";
 
 
 const moods = [
@@ -150,7 +151,7 @@ export default function HomeScreen() {
   const [chatMessage, setChatMessage] = useState("");
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; message: string }[]>([
-    { role: "ai", message: "Hi there! I'm your AI Companion from Heal Here. I'm here to listen and support you. How are you feeling today?" },
+    { role: "ai", message: "Hi there! I'm your AI Companion from Heal-Here. I'm here to help you find your light. How are you feeling today?" },
   ]);
   const chatScrollViewRef = useRef<ScrollView>(null);
 
@@ -335,12 +336,16 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.header}>
-          <View>
-            <ThemedText style={styles.greeting}>{greeting}</ThemedText>
+          <View style={styles.headerTextContainer}>
+            <ThemedText style={styles.greeting}>{greeting} ✨</ThemedText>
             <ThemedText style={styles.headerTitle}>
-              Ready to start{"\n"}your goals?
+              Finding Your Light
+            </ThemedText>
+            <ThemedText style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
+              Your path to wellness starts here
             </ThemedText>
           </View>
+          <SunflowerLogo size={60} />
         </View>
 
         <View style={styles.section}>
@@ -963,19 +968,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   header: {
-    marginBottom: Spacing["2xl"],
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   greeting: {
-    fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
-    color: Colors.light.textSecondary,
+    fontSize: 16,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.primary,
     marginBottom: Spacing.xs,
   },
   headerTitle: {
     fontSize: 28,
-    lineHeight: 36,
-    fontFamily: "PlayfairDisplay_400Regular",
+    fontFamily: "PlayfairDisplay_700Bold",
     color: Colors.light.text,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_500Medium",
+    marginTop: 4,
   },
   section: {
     marginBottom: Spacing["2xl"],
