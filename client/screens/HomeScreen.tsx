@@ -12,6 +12,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
@@ -20,6 +22,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
+import type { HomeStackParamList } from "@/navigation/HomeStackNavigator";
+
 
 const moods = [
   { id: "happy", icon: "smile", label: "Happy" },
@@ -134,12 +138,13 @@ export default function HomeScreen() {
   const headerHeight = useHeaderHeight();
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<HomeStackParamList>>();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [tasks, setTasks] = useState(dailyTasks);
   const [habits, setHabits] = useState(dailyHabits);
   const [selectedCondition, setSelectedCondition] = useState("anxiety");
   const [mealPlan, setMealPlan] = useState<MealEntry[]>(initialMealPlan);
-  
+
   // AI Chat state
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
@@ -168,7 +173,7 @@ export default function HomeScreen() {
 
   const analyzeMood = async () => {
     if (!selectedMood) return;
-    
+
     setIsAnalyzingMood(true);
     try {
       const moodLabel = moods.find(m => m.id === selectedMood)?.label || selectedMood;
@@ -260,7 +265,7 @@ export default function HomeScreen() {
 
   const handleSendChatMessage = async () => {
     if (!chatMessage.trim() || isLoadingChat) return;
-    
+
     const userMessage = chatMessage.trim();
     setChatMessage("");
     setChatHistory((prev) => [...prev, { role: "user", message: userMessage }]);
@@ -320,7 +325,7 @@ export default function HomeScreen() {
             </ThemedText>
             <Feather name="search" size={18} color={theme.textSecondary} />
           </Pressable>
-          <Pressable 
+          <Pressable
             style={styles.chatButton}
             onPress={handleOpenChat}
             testID="button-open-chat"
@@ -338,287 +343,352 @@ export default function HomeScreen() {
           </View>
         </View>
 
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>How are you feeling?</ThemedText>
-        <View style={styles.moodRow}>
-          {moods.map((mood) => (
-            <Pressable
-              key={mood.id}
-              style={[
-                styles.moodButton,
-                selectedMood === mood.id && styles.moodButtonSelected,
-              ]}
-              onPress={() => handleMoodSelect(mood.id)}
-            >
-              <Feather
-                name={mood.icon as any}
-                size={24}
-                color={selectedMood === mood.id ? Colors.light.primary : theme.textSecondary}
-              />
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Habit Tracker</ThemedText>
-          <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            {completedHabits}/{habits.length} done
-          </ThemedText>
-        </View>
-        <View style={styles.habitsRow}>
-          {habits.map((habit) => (
-            <Pressable
-              key={habit.id}
-              style={[
-                styles.habitItem,
-                { backgroundColor: habit.completed ? Colors.light.primary + "15" : theme.backgroundSecondary },
-              ]}
-              onPress={() => toggleHabit(habit.id)}
-            >
-              <View
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>How are you feeling?</ThemedText>
+          <View style={styles.moodRow}>
+            {moods.map((mood) => (
+              <Pressable
+                key={mood.id}
                 style={[
-                  styles.habitCheckbox,
-                  {
-                    backgroundColor: habit.completed ? Colors.light.primary : "transparent",
-                    borderColor: habit.completed ? Colors.light.primary : theme.border,
-                  },
+                  styles.moodButton,
+                  selectedMood === mood.id && styles.moodButtonSelected,
                 ]}
+                onPress={() => handleMoodSelect(mood.id)}
               >
-                {habit.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
-              </View>
-              <Feather name={habit.icon as any} size={18} color={habit.completed ? Colors.light.primary : theme.textSecondary} />
-              <ThemedText style={[styles.habitName, { color: habit.completed ? Colors.light.primary : theme.text }]}>
-                {habit.name}
-              </ThemedText>
-              <View style={styles.streakBadge}>
-                <Feather name="zap" size={10} color={Colors.light.primary} />
-                <ThemedText style={styles.streakText}>{habit.streak}</ThemedText>
-              </View>
-            </Pressable>
-          ))}
+                <Feather
+                  name={mood.icon as any}
+                  size={24}
+                  color={selectedMood === mood.id ? Colors.light.primary : theme.textSecondary}
+                />
+              </Pressable>
+            ))}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Meal Tracker</ThemedText>
-          <View style={styles.mealProgress}>
-            <ThemedText style={[styles.mealProgressText, { color: theme.textSecondary }]}>
-              {completedMeals}/{mealPlan.length} meals
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>AI Features</ThemedText>
+            <Feather name="cpu" size={18} color={Colors.light.primary} />
+          </View>
+          <View style={styles.aiFeaturesGrid}>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={() => navigation.navigate("CBTTools")}
+            >
+              <Feather name="refresh-cw" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>CBT Tools</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Thought reframing</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardBlue }]}
+              onPress={() => navigation.navigate("MoodAnalytics")}
+            >
+              <Feather name="bar-chart-2" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Mood Analytics</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Track patterns</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardGreen }]}
+              onPress={() => navigation.navigate("ConsultationAdvisor")}
+            >
+              <Feather name="users" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Life Advisor</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Career, finance</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.secondary + "30" }]}
+              onPress={() => navigation.navigate("RoutineCoach")}
+            >
+              <Feather name="calendar" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Routine Coach</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Daily wellness</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={() => navigation.navigate("LearningPaths")}
+            >
+              <Feather name="book" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Learning Paths</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Personal growth</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardBlue }]}
+              onPress={() => navigation.navigate("DailyAffirmations")}
+            >
+              <Feather name="heart" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Affirmations</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Daily positivity</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
+              onPress={() => navigation.navigate("ProgressDashboard")}
+            >
+              <Feather name="trending-up" size={22} color={Colors.light.primary} />
+              <ThemedText style={styles.aiFeatureTitle}>Dashboard</ThemedText>
+              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Transformation</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>Habit Tracker</ThemedText>
+            <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              {completedHabits}/{habits.length} done
             </ThemedText>
           </View>
-        </View>
-        
-        <View style={[styles.calorieCard, { backgroundColor: Colors.light.cardGreen }]}>
-          <View style={styles.calorieInfo}>
-            <ThemedText style={styles.calorieLabel}>Daily Intake</ThemedText>
-            <ThemedText style={styles.calorieValue}>{consumedCalories} / {totalCalories} kcal</ThemedText>
-          </View>
-          <View style={styles.calorieBarContainer}>
-            <View style={[styles.calorieBar, { backgroundColor: theme.border }]}>
-              <View 
+          <View style={styles.habitsRow}>
+            {habits.map((habit) => (
+              <Pressable
+                key={habit.id}
                 style={[
-                  styles.calorieBarFill, 
-                  { 
-                    backgroundColor: Colors.light.primary, 
-                    width: `${Math.min((consumedCalories / totalCalories) * 100, 100)}%` 
-                  }
-                ]} 
-              />
+                  styles.habitItem,
+                  { backgroundColor: habit.completed ? Colors.light.primary + "15" : theme.backgroundSecondary },
+                ]}
+                onPress={() => toggleHabit(habit.id)}
+              >
+                <View
+                  style={[
+                    styles.habitCheckbox,
+                    {
+                      backgroundColor: habit.completed ? Colors.light.primary : "transparent",
+                      borderColor: habit.completed ? Colors.light.primary : theme.border,
+                    },
+                  ]}
+                >
+                  {habit.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
+                </View>
+                <Feather name={habit.icon as any} size={18} color={habit.completed ? Colors.light.primary : theme.textSecondary} />
+                <ThemedText style={[styles.habitName, { color: habit.completed ? Colors.light.primary : theme.text }]}>
+                  {habit.name}
+                </ThemedText>
+                <View style={styles.streakBadge}>
+                  <Feather name="zap" size={10} color={Colors.light.primary} />
+                  <ThemedText style={styles.streakText}>{habit.streak}</ThemedText>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>Meal Tracker</ThemedText>
+            <View style={styles.mealProgress}>
+              <ThemedText style={[styles.mealProgressText, { color: theme.textSecondary }]}>
+                {completedMeals}/{mealPlan.length} meals
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={[styles.calorieCard, { backgroundColor: Colors.light.cardGreen }]}>
+            <View style={styles.calorieInfo}>
+              <ThemedText style={styles.calorieLabel}>Daily Intake</ThemedText>
+              <ThemedText style={styles.calorieValue}>{consumedCalories} / {totalCalories} kcal</ThemedText>
+            </View>
+            <View style={styles.calorieBarContainer}>
+              <View style={[styles.calorieBar, { backgroundColor: theme.border }]}>
+                <View
+                  style={[
+                    styles.calorieBarFill,
+                    {
+                      backgroundColor: Colors.light.primary,
+                      width: `${Math.min((consumedCalories / totalCalories) * 100, 100)}%`
+                    }
+                  ]}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.mealList}>
+            {mealPlan.map((meal) => (
+              <Pressable
+                key={meal.id}
+                style={[styles.mealCard, { backgroundColor: mealTypeColors[meal.mealType] }]}
+                onPress={() => toggleMeal(meal.id)}
+              >
+                <View style={styles.mealIconContainer}>
+                  <Feather name={mealTypeIcons[meal.mealType] as any} size={20} color={Colors.light.primary} />
+                </View>
+                <View style={styles.mealInfo}>
+                  <View style={styles.mealHeader}>
+                    <ThemedText style={styles.mealName}>{meal.name}</ThemedText>
+                    {meal.prescribedBy ? (
+                      <View style={styles.prescribedBadge}>
+                        <Feather name="user-check" size={10} color={Colors.light.primary} />
+                        <ThemedText style={styles.prescribedText}>{meal.prescribedBy}</ThemedText>
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.mealMeta}>
+                    <ThemedText style={[styles.mealTime, { color: theme.textSecondary }]}>{meal.time}</ThemedText>
+                    <ThemedText style={[styles.mealCalories, { color: Colors.light.primary }]}>{meal.calories} kcal</ThemedText>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.mealCheckbox,
+                    {
+                      backgroundColor: meal.completed ? Colors.light.primary : "transparent",
+                      borderColor: meal.completed ? Colors.light.primary : theme.border,
+                    },
+                  ]}
+                >
+                  {meal.completed ? <Feather name="check" size={14} color="#FFF" /> : null}
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>Daily Goals</ThemedText>
+            <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              1/5 selected
+            </ThemedText>
+          </View>
+          <View style={styles.goalsGrid}>
+            {goalCards.map((goal) => (
+              <Pressable key={goal.id} style={[styles.goalCard, { backgroundColor: goal.bgColor }]}>
+                <Image source={goal.image} style={styles.goalImage} contentFit="contain" />
+                <ThemedText style={styles.goalTitle}>{goal.title}</ThemedText>
+                <View style={styles.goalMeta}>
+                  <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
+                    {goal.sessions}
+                  </ThemedText>
+                  <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
+                    {goal.duration}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Today's Schedule</ThemedText>
+          <View style={styles.taskList}>
+            {tasks.map((task) => (
+              <Pressable
+                key={task.id}
+                style={[styles.taskItem, { backgroundColor: theme.backgroundSecondary }]}
+                onPress={() => toggleTask(task.id)}
+              >
+                <View
+                  style={[
+                    styles.taskCheckbox,
+                    {
+                      backgroundColor: task.completed ? Colors.light.primary : "transparent",
+                      borderColor: task.completed ? Colors.light.primary : theme.border,
+                    },
+                  ]}
+                >
+                  {task.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
+                </View>
+                <View style={styles.taskContent}>
+                  <ThemedText
+                    style={[
+                      styles.taskText,
+                      task.completed ? { textDecorationLine: "line-through" as const, color: theme.textSecondary } : {},
+                    ]}
+                  >
+                    {task.text}
+                  </ThemedText>
+                  <ThemedText style={[styles.taskTime, { color: theme.textSecondary }]}>
+                    {task.time}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={[styles.featureCard, { backgroundColor: Colors.light.cardPeach }]}>
+            <Image
+              source={require("../assets/images/line_art_yoga_prayer_pose_illustration.png")}
+              style={styles.featureImage}
+              contentFit="contain"
+            />
+            <View style={styles.featureContent}>
+              <ThemedText style={styles.featureTitle}>Breath In</ThemedText>
+              <ThemedText style={[styles.featureDescription, { color: theme.textSecondary }]}>
+                A 5-minute intro to breathing energy to heal and bring positivity
+              </ThemedText>
+              <Pressable style={[styles.startButton, { backgroundColor: Colors.light.primary }]}>
+                <ThemedText style={styles.startButtonText}>Start</ThemedText>
+              </Pressable>
             </View>
           </View>
         </View>
 
-        <View style={styles.mealList}>
-          {mealPlan.map((meal) => (
-            <Pressable 
-              key={meal.id} 
-              style={[styles.mealCard, { backgroundColor: mealTypeColors[meal.mealType] }]}
-              onPress={() => toggleMeal(meal.id)}
-            >
-              <View style={styles.mealIconContainer}>
-                <Feather name={mealTypeIcons[meal.mealType] as any} size={20} color={Colors.light.primary} />
-              </View>
-              <View style={styles.mealInfo}>
-                <View style={styles.mealHeader}>
-                  <ThemedText style={styles.mealName}>{meal.name}</ThemedText>
-                  {meal.prescribedBy ? (
-                    <View style={styles.prescribedBadge}>
-                      <Feather name="user-check" size={10} color={Colors.light.primary} />
-                      <ThemedText style={styles.prescribedText}>{meal.prescribedBy}</ThemedText>
-                    </View>
-                  ) : null}
-                </View>
-                <View style={styles.mealMeta}>
-                  <ThemedText style={[styles.mealTime, { color: theme.textSecondary }]}>{meal.time}</ThemedText>
-                  <ThemedText style={[styles.mealCalories, { color: Colors.light.primary }]}>{meal.calories} kcal</ThemedText>
-                </View>
-              </View>
-              <View
-                style={[
-                  styles.mealCheckbox,
-                  {
-                    backgroundColor: meal.completed ? Colors.light.primary : "transparent",
-                    borderColor: meal.completed ? Colors.light.primary : theme.border,
-                  },
-                ]}
-              >
-                {meal.completed ? <Feather name="check" size={14} color="#FFF" /> : null}
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Daily Goals</ThemedText>
-          <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
-            1/5 selected
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={styles.sectionTitle}>Diet & Nutrition</ThemedText>
+            <Feather name="heart" size={18} color={Colors.light.primary} />
+          </View>
+          <ThemedText style={[styles.dietSubtitle, { color: theme.textSecondary }]}>
+            Healthy recipes for your mental wellness
           </ThemedText>
-        </View>
-        <View style={styles.goalsGrid}>
-          {goalCards.map((goal) => (
-            <Pressable key={goal.id} style={[styles.goalCard, { backgroundColor: goal.bgColor }]}>
-              <Image source={goal.image} style={styles.goalImage} contentFit="contain" />
-              <ThemedText style={styles.goalTitle}>{goal.title}</ThemedText>
-              <View style={styles.goalMeta}>
-                <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
-                  {goal.sessions}
-                </ThemedText>
-                <ThemedText style={[styles.goalMetaText, { color: theme.textSecondary }]}>
-                  {goal.duration}
-                </ThemedText>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
 
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Today's Schedule</ThemedText>
-        <View style={styles.taskList}>
-          {tasks.map((task) => (
-            <Pressable
-              key={task.id}
-              style={[styles.taskItem, { backgroundColor: theme.backgroundSecondary }]}
-              onPress={() => toggleTask(task.id)}
-            >
-              <View
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.conditionScrollContainer}
+          >
+            {mentalHealthConditions.map((condition) => (
+              <Pressable
+                key={condition.id}
                 style={[
-                  styles.taskCheckbox,
-                  {
-                    backgroundColor: task.completed ? Colors.light.primary : "transparent",
-                    borderColor: task.completed ? Colors.light.primary : theme.border,
-                  },
+                  styles.conditionPill,
+                  selectedCondition === condition.id ? styles.conditionPillSelected : { backgroundColor: theme.backgroundSecondary },
                 ]}
+                onPress={() => handleConditionSelect(condition.id)}
               >
-                {task.completed ? <Feather name="check" size={12} color="#FFF" /> : null}
-              </View>
-              <View style={styles.taskContent}>
+                <Feather
+                  name={condition.icon as any}
+                  size={14}
+                  color={selectedCondition === condition.id ? "#FFF" : Colors.light.primary}
+                />
                 <ThemedText
                   style={[
-                    styles.taskText,
-                    task.completed ? { textDecorationLine: "line-through" as const, color: theme.textSecondary } : {},
+                    styles.conditionText,
+                    selectedCondition === condition.id ? styles.conditionTextSelected : {},
                   ]}
                 >
-                  {task.text}
+                  {condition.label}
                 </ThemedText>
-                <ThemedText style={[styles.taskTime, { color: theme.textSecondary }]}>
-                  {task.time}
-                </ThemedText>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
+              </Pressable>
+            ))}
+          </ScrollView>
 
-      <View style={styles.section}>
-        <View style={[styles.featureCard, { backgroundColor: Colors.light.cardPeach }]}>
-          <Image
-            source={require("../assets/images/line_art_yoga_prayer_pose_illustration.png")}
-            style={styles.featureImage}
-            contentFit="contain"
-          />
-          <View style={styles.featureContent}>
-            <ThemedText style={styles.featureTitle}>Breath In</ThemedText>
-            <ThemedText style={[styles.featureDescription, { color: theme.textSecondary }]}>
-              A 5-minute intro to breathing energy to heal and bring positivity
-            </ThemedText>
-            <Pressable style={[styles.startButton, { backgroundColor: Colors.light.primary }]}>
-              <ThemedText style={styles.startButtonText}>Start</ThemedText>
-            </Pressable>
+          <View style={styles.recipeList}>
+            {currentRecipes.map((recipe) => (
+              <Pressable key={recipe.id} style={[styles.recipeCard, { backgroundColor: recipe.color }]}>
+                <View style={styles.recipeIconContainer}>
+                  <Feather name="coffee" size={24} color={Colors.light.primary} />
+                </View>
+                <View style={styles.recipeContent}>
+                  <ThemedText style={styles.recipeName}>{recipe.name}</ThemedText>
+                  <ThemedText style={[styles.recipeBenefit, { color: Colors.light.primary }]}>
+                    {recipe.benefit}
+                  </ThemedText>
+                  <ThemedText style={[styles.recipeIngredients, { color: theme.textSecondary }]} numberOfLines={1}>
+                    {recipe.ingredients}
+                  </ThemedText>
+                </View>
+                <View style={styles.recipeTime}>
+                  <Feather name="clock" size={12} color={theme.textSecondary} />
+                  <ThemedText style={[styles.recipeTimeText, { color: theme.textSecondary }]}>
+                    {recipe.time}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            ))}
           </View>
         </View>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Diet & Nutrition</ThemedText>
-          <Feather name="heart" size={18} color={Colors.light.primary} />
-        </View>
-        <ThemedText style={[styles.dietSubtitle, { color: theme.textSecondary }]}>
-          Healthy recipes for your mental wellness
-        </ThemedText>
-        
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.conditionScrollContainer}
-        >
-          {mentalHealthConditions.map((condition) => (
-            <Pressable
-              key={condition.id}
-              style={[
-                styles.conditionPill,
-                selectedCondition === condition.id ? styles.conditionPillSelected : { backgroundColor: theme.backgroundSecondary },
-              ]}
-              onPress={() => handleConditionSelect(condition.id)}
-            >
-              <Feather
-                name={condition.icon as any}
-                size={14}
-                color={selectedCondition === condition.id ? "#FFF" : Colors.light.primary}
-              />
-              <ThemedText
-                style={[
-                  styles.conditionText,
-                  selectedCondition === condition.id ? styles.conditionTextSelected : {},
-                ]}
-              >
-                {condition.label}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </ScrollView>
-
-        <View style={styles.recipeList}>
-          {currentRecipes.map((recipe) => (
-            <Pressable key={recipe.id} style={[styles.recipeCard, { backgroundColor: recipe.color }]}>
-              <View style={styles.recipeIconContainer}>
-                <Feather name="coffee" size={24} color={Colors.light.primary} />
-              </View>
-              <View style={styles.recipeContent}>
-                <ThemedText style={styles.recipeName}>{recipe.name}</ThemedText>
-                <ThemedText style={[styles.recipeBenefit, { color: Colors.light.primary }]}>
-                  {recipe.benefit}
-                </ThemedText>
-                <ThemedText style={[styles.recipeIngredients, { color: theme.textSecondary }]} numberOfLines={1}>
-                  {recipe.ingredients}
-                </ThemedText>
-              </View>
-              <View style={styles.recipeTime}>
-                <Feather name="clock" size={12} color={theme.textSecondary} />
-                <ThemedText style={[styles.recipeTimeText, { color: theme.textSecondary }]}>
-                  {recipe.time}
-                </ThemedText>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
       </ScrollView>
 
       <Modal
@@ -646,9 +716,9 @@ export default function HomeScreen() {
               </Pressable>
             </View>
 
-            <ScrollView 
+            <ScrollView
               ref={chatScrollViewRef}
-              style={styles.chatMessages} 
+              style={styles.chatMessages}
               contentContainerStyle={styles.chatMessagesContent}
               onContentSizeChange={() => chatScrollViewRef.current?.scrollToEnd({ animated: true })}
             >
@@ -738,10 +808,10 @@ export default function HomeScreen() {
 
             <ScrollView style={styles.moodModalScroll} contentContainerStyle={styles.moodModalScrollContent}>
               <View style={[styles.moodSelectedCard, { backgroundColor: Colors.light.cardPeach }]}>
-                <Feather 
-                  name={moods.find(m => m.id === selectedMood)?.icon as any || "meh"} 
-                  size={32} 
-                  color={Colors.light.primary} 
+                <Feather
+                  name={moods.find(m => m.id === selectedMood)?.icon as any || "meh"}
+                  size={32}
+                  color={Colors.light.primary}
                 />
                 <View style={styles.moodSelectedInfo}>
                   <ThemedText style={styles.moodSelectedLabel}>You're feeling</ThemedText>
@@ -759,7 +829,7 @@ export default function HomeScreen() {
                       key={hours}
                       style={[
                         styles.sleepOption,
-                        { 
+                        {
                           backgroundColor: sleepHours === hours ? Colors.light.primary : theme.backgroundSecondary,
                           borderColor: sleepHours === hours ? Colors.light.primary : theme.border,
                         },
@@ -786,7 +856,7 @@ export default function HomeScreen() {
                       style={[
                         styles.stressOption,
                         {
-                          backgroundColor: level <= stressLevel 
+                          backgroundColor: level <= stressLevel
                             ? (level <= 3 ? "#4CAF50" : level <= 6 ? Colors.light.primary : "#E85D5D")
                             : theme.backgroundSecondary,
                         },
@@ -1485,5 +1555,26 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_400Regular",
     color: Colors.light.text,
     lineHeight: 24,
+  },
+  aiFeaturesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.md,
+  },
+  aiFeatureCard: {
+    width: "47%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    gap: Spacing.xs,
+  },
+  aiFeatureTitle: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.text,
+    marginTop: Spacing.xs,
+  },
+  aiFeatureDesc: {
+    fontSize: 12,
+    fontFamily: "PlusJakartaSans_400Regular",
   },
 });

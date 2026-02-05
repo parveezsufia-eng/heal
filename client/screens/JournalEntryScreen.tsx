@@ -5,6 +5,7 @@ import {
   TextInput,
   Pressable,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -18,6 +19,7 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { JournalStackParamList } from "@/navigation/JournalStackNavigator";
+import { getApiUrl } from "@/lib/query-client";
 
 type JournalEntryRouteProp = RouteProp<JournalStackParamList, "JournalEntry">;
 
@@ -35,10 +37,18 @@ export default function JournalEntryScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<JournalEntryRouteProp>();
-  
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [aiInsights, setAiInsights] = useState<{
+    insights: string;
+    triggers: string | null;
+    patterns: string | null;
+    gratitudePrompt: string | null;
+  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const today = new Date();
   const dateString = today.toLocaleDateString("en-US", {
@@ -55,11 +65,58 @@ export default function JournalEntryScreen() {
     setSelectedMood(moodId);
   };
 
-  const handleSave = () => {
-    if (Platform.OS !== "web") {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  const handleGetInsights = async () => {
+    if (!content.trim()) return;
+
+    setIsGeneratingInsights(true);
+    try {
+      const response = await fetch(new URL("/api/ai/journal-insights", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, title }),
+      });
+      const data = await response.json();
+      setAiInsights(data);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (error) {
+      console.error("Failed to get journal insights:", error);
+    } finally {
+      setIsGeneratingInsights(false);
     }
-    navigation.goBack();
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !content.trim() || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(new URL("/api/journal-entries", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          content,
+          mood: selectedMood,
+          aiInsights: aiInsights?.insights,
+          triggers: aiInsights?.triggers,
+          patterns: aiInsights?.patterns,
+          gratitudePrompt: aiInsights?.gratitudePrompt,
+        }),
+      });
+
+      if (response.ok) {
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error("Failed to save journal entry:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -152,35 +209,75 @@ export default function JournalEntryScreen() {
           Writing prompts
         </ThemedText>
         <View style={styles.promptsContainer}>
-          <Pressable style={[styles.promptChip, { backgroundColor: Colors.light.primary + "20" }]}>
+          <Pressable
+            style={[styles.promptChip, { backgroundColor: Colors.light.primary + "20" }]}
+            onPress={() => setContent(prev => prev + (prev ? "\n\n" : "") + "What am I grateful for today?")}
+          >
             <ThemedText type="small" style={{ color: Colors.light.primary }}>
               What am I grateful for?
             </ThemedText>
           </Pressable>
-          <Pressable style={[styles.promptChip, { backgroundColor: Colors.light.secondary + "20" }]}>
+          <Pressable
+            style={[styles.promptChip, { backgroundColor: Colors.light.secondary + "20" }]}
+            onPress={() => setContent(prev => prev + (prev ? "\n\n" : "") + "The biggest challenge I faced today was...")}
+          >
             <ThemedText type="small" style={{ color: Colors.light.secondary }}>
               What challenged me today?
             </ThemedText>
           </Pressable>
-          <Pressable style={[styles.promptChip, { backgroundColor: Colors.light.accent + "20" }]}>
+          <Pressable
+            style={[styles.promptChip, { backgroundColor: Colors.light.accent + "20" }]}
+            onPress={() => setContent(prev => prev + (prev ? "\n\n" : "") + "One thing that made me smile was...")}
+          >
             <ThemedText type="small" style={{ color: Colors.light.accent }}>
               What made me smile?
-            </ThemedText>
-          </Pressable>
-          <Pressable style={[styles.promptChip, { backgroundColor: Colors.light.success + "20" }]}>
-            <ThemedText type="small" style={{ color: Colors.light.success }}>
-              What do I want to improve?
             </ThemedText>
           </Pressable>
         </View>
       </View>
 
+      <View style={styles.aiSection}>
+        <Pressable
+          style={[styles.aiInsightButton, { backgroundColor: Colors.light.cardBlue }]}
+          onPress={handleGetInsights}
+          disabled={isGeneratingInsights || !content.trim()}
+        >
+          {isGeneratingInsights ? (
+            <ActivityIndicator size="small" color={Colors.light.primary} />
+          ) : (
+            <>
+              <Feather name="cpu" size={18} color={Colors.light.primary} />
+              <ThemedText style={[styles.aiInsightButtonText, { color: Colors.light.primary }]}>
+                Get AI Emotional Insights
+              </ThemedText>
+            </>
+          )}
+        </Pressable>
+
+        {aiInsights && (
+          <View style={[styles.aiInsightsContainer, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.insightHeader}>
+              <Feather name="star" size={16} color={Colors.light.primary} />
+              <ThemedText style={styles.insightTitle}>Emotional Analysis</ThemedText>
+            </View>
+            <ThemedText style={styles.insightText}>{aiInsights.insights}</ThemedText>
+
+            {aiInsights.gratitudePrompt && (
+              <View style={[styles.gratitudeBox, { backgroundColor: Colors.light.cardGreen }]}>
+                <ThemedText style={styles.gratitudeLabel}>Gratitude Focus:</ThemedText>
+                <ThemedText style={styles.gratitudeText}>{aiInsights.gratitudePrompt}</ThemedText>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+
       <Button
         onPress={handleSave}
         style={styles.saveButton}
-        disabled={!title.trim() || !content.trim()}
+        disabled={!title.trim() || !content.trim() || isSaving}
       >
-        Save Entry
+        {isSaving ? "Saving..." : "Save Entry"}
       </Button>
     </KeyboardAwareScrollViewCompat>
   );
@@ -244,5 +341,63 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: Colors.light.primary,
+    marginTop: Spacing.xl,
+  },
+  aiSection: {
+    marginBottom: Spacing.xl,
+  },
+  aiInsightButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.light.primary + "30",
+  },
+  aiInsightButtonText: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  aiInsightsContainer: {
+    marginTop: Spacing.md,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.light.primary + "20",
+  },
+  insightHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  insightTitle: {
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.light.primary,
+  },
+  insightText: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_400Regular",
+    lineHeight: 22,
+    color: Colors.light.text,
+  },
+  gratitudeBox: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  gratitudeLabel: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.light.success,
+    marginBottom: 4,
+  },
+  gratitudeText: {
+    fontSize: 13,
+    fontFamily: "PlusJakartaSans_500Medium",
+    color: Colors.light.text,
   },
 });

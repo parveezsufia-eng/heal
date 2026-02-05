@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -7,6 +7,8 @@ import {
   Platform,
   Modal,
   TextInput,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -21,16 +23,20 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { JournalStackParamList } from "@/navigation/JournalStackNavigator";
+import { getApiUrl } from "@/lib/query-client";
 
 type JournalNavigationProp = NativeStackNavigationProp<JournalStackParamList>;
 
 interface JournalEntry {
-  id: string;
-  date: string;
-  day: string;
+  id: number;
   title: string;
-  preview: string;
-  mood: string;
+  content: string;
+  mood: string | null;
+  aiInsights: string | null;
+  triggers: string | null;
+  patterns: string | null;
+  gratitudePrompt: string | null;
+  createdAt: string;
 }
 
 const moodColors: Record<string, string> = {
@@ -41,11 +47,7 @@ const moodColors: Record<string, string> = {
   anxious: Colors.light.emergency,
 };
 
-const sampleEntries: JournalEntry[] = [
-  { id: "1", date: "Jan 18", day: "Today", title: "Finding peace", preview: "Had a wonderful meditation session this morning...", mood: "calm" },
-  { id: "2", date: "Jan 17", day: "Yesterday", title: "Grateful moments", preview: "Spent time reflecting on the things I'm grateful for...", mood: "happy" },
-  { id: "3", date: "Jan 16", day: "Thursday", title: "New beginnings", preview: "Started a new breathing exercise routine...", mood: "neutral" },
-];
+// Entries will be fetched from API
 
 export default function JournalScreen() {
   const insets = useSafeAreaInsets();
@@ -53,10 +55,37 @@ export default function JournalScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
   const navigation = useNavigation<JournalNavigationProp>();
-  const [entries, setEntries] = useState<JournalEntry[]>(sampleEntries);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pin, setPin] = useState("");
   const [isLocked, setIsLocked] = useState(true);
+
+  const fetchEntries = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const response = await fetch(new URL("/api/journal-entries", getApiUrl()).toString());
+      const data = await response.json();
+      setEntries(data);
+    } catch (error) {
+      console.error("Failed to fetch journal entries:", error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLocked) {
+      fetchEntries();
+    }
+  }, [isLocked, fetchEntries]);
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    fetchEntries(false);
+  }, [fetchEntries]);
 
   const handleUnlock = () => {
     if (pin === "1234") {
@@ -73,11 +102,11 @@ export default function JournalScreen() {
     }
   };
 
-  const handleEntryPress = (entryId: string) => {
+  const handleEntryPress = (entryId: number) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    navigation.navigate("JournalEntry", { entryId });
+    navigation.navigate("JournalEntry", { entryId: entryId.toString() });
   };
 
   const handleAddEntry = () => {
@@ -87,22 +116,36 @@ export default function JournalScreen() {
     navigation.navigate("JournalEntry", {});
   };
 
-  const renderEntry = ({ item }: { item: JournalEntry }) => (
-    <Pressable onPress={() => handleEntryPress(item.id)}>
-      <View style={[styles.entryCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <View style={styles.entryLeft}>
-          <ThemedText style={[styles.entryDay, { color: theme.textSecondary }]}>{item.day}</ThemedText>
-          <ThemedText style={styles.entryTitle}>{item.title}</ThemedText>
-          <ThemedText style={[styles.entryPreview, { color: theme.textSecondary }]} numberOfLines={1}>
-            {item.preview}
-          </ThemedText>
+  const renderEntry = ({ item }: { item: JournalEntry }) => {
+    const date = new Date(item.createdAt);
+    const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+
+    return (
+      <Pressable onPress={() => handleEntryPress(item.id)}>
+        <View style={[styles.entryCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.entryLeft}>
+            <ThemedText style={[styles.entryDay, { color: theme.textSecondary }]}>
+              {dateStr} • {dayName}
+            </ThemedText>
+            <ThemedText style={styles.entryTitle}>{item.title}</ThemedText>
+            <ThemedText style={[styles.entryPreview, { color: theme.textSecondary }]} numberOfLines={1}>
+              {item.content}
+            </ThemedText>
+            {item.aiInsights && (
+              <View style={styles.aiBadge}>
+                <Feather name="cpu" size={10} color={Colors.light.primary} />
+                <ThemedText style={styles.aiBadgeText}>AI Analyzed</ThemedText>
+              </View>
+            )}
+          </View>
+          <View style={[styles.moodIndicator, { backgroundColor: (item.mood ? moodColors[item.mood] : theme.border) + "30" }]}>
+            <View style={[styles.moodDot, { backgroundColor: item.mood ? moodColors[item.mood] : theme.border }]} />
+          </View>
         </View>
-        <View style={[styles.moodIndicator, { backgroundColor: moodColors[item.mood] + "30" }]}>
-          <View style={[styles.moodDot, { backgroundColor: moodColors[item.mood] }]} />
-        </View>
-      </View>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   const renderLockedState = () => (
     <View style={styles.lockedContainer}>
@@ -205,7 +248,7 @@ export default function JournalScreen() {
           <FlatList
             data={entries}
             renderItem={renderEntry}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={{
               paddingHorizontal: Spacing.xl,
               paddingBottom: tabBarHeight + Spacing["5xl"],
@@ -214,6 +257,22 @@ export default function JournalScreen() {
             scrollIndicatorInsets={{ bottom: insets.bottom }}
             showsVerticalScrollIndicator={false}
             ItemSeparatorComponent={() => <View style={{ height: Spacing.md }} />}
+            ListEmptyComponent={
+              isLoading ? (
+                <View style={styles.emptyContainer}>
+                  <ActivityIndicator size="large" color={Colors.light.primary} />
+                </View>
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+                    No journal entries yet. Start writing!
+                  </ThemedText>
+                </View>
+              )
+            }
+            refreshControl={
+              <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+            }
           />
         </>
       )}
@@ -333,4 +392,25 @@ const styles = StyleSheet.create({
   submitButton: { width: "100%", paddingVertical: Spacing.lg, borderRadius: BorderRadius.lg, alignItems: "center", marginBottom: Spacing.md },
   submitButtonText: { fontSize: 15, fontFamily: "PlusJakartaSans_600SemiBold", color: "#FFFFFF" },
   skipText: { fontSize: 14, fontFamily: "PlusJakartaSans_400Regular" },
+  aiBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 4,
+  },
+  aiBadgeText: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: Colors.light.primary,
+  },
+  emptyContainer: {
+    paddingTop: 100,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: "Nunito_400Regular",
+    textAlign: "center",
+  },
 });
