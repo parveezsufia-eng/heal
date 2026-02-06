@@ -40,8 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 body: JSON.stringify(credentials),
             });
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Login failed");
+                let errorMessage = "Login failed";
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
             }
             return response.json();
         },
@@ -58,8 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 body: JSON.stringify(data),
             });
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Registration failed");
+                let errorMessage = "Registration failed";
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    errorMessage = `Server Error (${response.status}): ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
             }
             return response.json();
         },
