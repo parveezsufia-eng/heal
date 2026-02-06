@@ -1,4 +1,8 @@
+import React from "react";
+import { View, StyleSheet } from "react-native";
 import { SunflowerLogo } from "./SunflowerLogo";
+import { ThemedText } from "./ThemedText";
+import { Colors, Spacing } from "@/constants/theme";
 
 interface HeaderTitleProps {
   title: string;
@@ -19,16 +23,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
   },
-  icon: {
-    width: 28,
-    height: 28,
-    marginRight: Spacing.sm,
-    borderRadius: 8,
-  },
   title: {
     fontSize: 18,
     fontWeight: "700",
     fontFamily: "PlusJakartaSans_700Bold",
     color: Colors.light.primary,
+    marginLeft: Spacing.sm,
   },
 });

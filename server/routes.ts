@@ -1,6 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import OpenAI from "openai";
+
+let openai: OpenAI | null = null;
+try {
+  if (process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+} catch (error) {
+  console.error("Failed to initialize OpenAI client:", error);
+}
+
 import { db } from "./db";
 import {
   conversations, messages, moodEntries, tasks, reminders, habits,
@@ -8,11 +21,6 @@ import {
   moodAnalytics, routines, learningPaths, affirmations
 } from "@shared/schema";
 import { eq, desc, gte, lte, and } from "drizzle-orm";
-
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
 
 // Crisis detection phrases
 const CRISIS_PHRASES = [
@@ -37,6 +45,20 @@ function detectCrisis(message: string): { isCrisis: boolean; severity: string; m
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication middleware for /api routes
+  app.use("/api", (req, res, next) => {
+    if (req.method === "POST" && (req.path === "/login" || req.path === "/register")) {
+      return next();
+    }
+
+    // Allow public access to certain endpoints if needed, 
+    // but for now, we protect everything else
+    if (!req.isAuthenticated() && req.path !== "/user") {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    next();
+  });
+
   // AI Chat routes
   app.get("/api/conversations", async (req, res) => {
     const result = await db.select().from(conversations).orderBy(desc(conversations.createdAt));

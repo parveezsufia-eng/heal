@@ -4,9 +4,20 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
  * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
  * @returns {string} The API base URL
  */
+import Constants from "expo-constants";
+
 export function getApiUrl(): string {
-  // Use the production Render URL as the primary domain
   const productionUrl = "https://heal-oid5.onrender.com";
+
+  // During development, try to use the local machine's IP
+  if (__DEV__) {
+    const debuggerHost = Constants.expoConfig?.hostUri;
+    const address = debuggerHost?.split(":")[0];
+    if (address) {
+      // Assuming server runs on 5000
+      return `http://${address}:5000`;
+    }
+  }
 
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 

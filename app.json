@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "healhere",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.healhere.app"
@@ -43,7 +43,7 @@
       "expo-web-browser"
     ],
     "experiments": {
-      "reactCompiler": true
+      "reactCompiler": false
     }
   }
 }
