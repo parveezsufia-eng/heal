@@ -2,11 +2,13 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ProfileScreen from "@/screens/ProfileScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
+import EditProfileScreen from "@/screens/EditProfileScreen";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 
 export type ProfileStackParamList = {
   Profile: undefined;
   Settings: undefined;
+  EditProfile: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -28,6 +30,13 @@ export default function ProfileStackNavigator() {
         component={SettingsScreen}
         options={{
           headerTitle: "Settings",
+        }}
+      />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          headerTitle: "Edit Profile",
         }}
       />
     </Stack.Navigator>

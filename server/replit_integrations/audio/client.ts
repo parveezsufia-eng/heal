@@ -1,11 +1,9 @@
-import OpenAI, { toFile } from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { Buffer } from "node:buffer";
 import { spawn } from "child_process";
 
-export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+export const gemini = genAI;
 
 /**
  * Convert WebM audio buffer to WAV format using ffmpeg.
@@ -32,7 +30,7 @@ export function convertWebmToWav(webmBuffer: Buffer): Promise<Buffer> {
     const chunks: Buffer[] = [];
 
     ffmpeg.stdout.on("data", (chunk) => chunks.push(chunk));
-    ffmpeg.stderr.on("data", () => {}); // Suppress ffmpeg logs
+    ffmpeg.stderr.on("data", () => { }); // Suppress ffmpeg logs
     ffmpeg.on("close", (code) => {
       if (code === 0) {
         resolve(Buffer.concat(chunks));
@@ -49,7 +47,7 @@ export function convertWebmToWav(webmBuffer: Buffer): Promise<Buffer> {
 
 /**
  * Voice Chat: User speaks, LLM responds with audio (audio-in, audio-out).
- * Uses gpt-audio-mini model via Replit AI Integrations.
+ * Uses gemini model via Google Gen AI.
  *
  * @example
  * // Converting browser WebM to WAV before calling:
@@ -62,37 +60,36 @@ export async function voiceChat(
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
   inputFormat: "wav" | "mp3" = "wav",
   outputFormat: "wav" | "mp3" = "mp3"
-): Promise<{ transcript: string; audioResponse: Buffer }> {
+): Promise<{ transcript: string; audioResponse: Buffer | null }> {
   const audioBase64 = audioBuffer.toString("base64");
-  const response = await openai.chat.completions.create({
-    model: "gpt-audio-mini",
-    modalities: ["text", "audio"],
-    audio: { voice, format: outputFormat },
-    messages: [{
-      role: "user",
-      content: [
-        { type: "input_audio", input_audio: { data: audioBase64, format: inputFormat } },
-      ],
-    }],
+  const response = await gemini.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { data: audioBase64, mimeType: `audio/${inputFormat}` } },
+          { text: "Respond to this audio message." }
+        ]
+      },
+    ],
   });
-  const message = response.choices[0]?.message as any;
-  const transcript = message?.audio?.transcript || message?.content || "";
-  const audioData = message?.audio?.data ?? "";
+
+  const transcript = response.text || "";
+  // Note: Gemini text-to-speech is handled differently if needed, 
+  // but for basic migration we return the transcript.
+  // Full audio-to-audio is experimental in some Gemini versions.
   return {
     transcript,
-    audioResponse: Buffer.from(audioData, "base64"),
+    audioResponse: null,
   };
 }
 
 /**
  * Streaming Voice Chat: For real-time audio responses.
- * Note: Streaming only supports pcm16 output format.
- *
- * @example
- * // Converting browser WebM to WAV before calling:
- * const webmBuffer = Buffer.from(req.body.audio, "base64");
- * const wavBuffer = await convertWebmToWav(webmBuffer);
- * for await (const chunk of voiceChatStream(wavBuffer)) { ... }
+ * Note: Gemini streaming is available for text. 
+ * Full audio streaming is experimental/Multimodal Live.
+ * Keeping the interface for compatibility.
  */
 export async function voiceChatStream(
   audioBuffer: Buffer,
@@ -100,121 +97,100 @@ export async function voiceChatStream(
   inputFormat: "wav" | "mp3" = "wav"
 ): Promise<AsyncIterable<{ type: "transcript" | "audio"; data: string }>> {
   const audioBase64 = audioBuffer.toString("base64");
-  const stream = await openai.chat.completions.create({
-    model: "gpt-audio-mini",
-    modalities: ["text", "audio"],
-    audio: { voice, format: "pcm16" },
-    messages: [{
+
+  // Using gemini.models.generateContentStream
+  const responseStream = await gemini.models.generateContentStream({
+    model: "gemini-2.0-flash",
+    contents: [{
       role: "user",
-      content: [
-        { type: "input_audio", input_audio: { data: audioBase64, format: inputFormat } },
-      ],
+      parts: [
+        { inlineData: { data: audioBase64, mimeType: `audio/${inputFormat}` } },
+        { text: "Respond to this audio message." }
+      ]
     }],
-    stream: true,
   });
 
   return (async function* () {
-    for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta as any;
-      if (!delta) continue;
-      if (delta?.audio?.transcript) {
-        yield { type: "transcript", data: delta.audio.transcript };
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        yield { type: "transcript", data: chunk.text };
       }
-      if (delta?.audio?.data) {
-        yield { type: "audio", data: delta.audio.data };
-      }
+      // Note: Audio chunking is not directly supported in this REST-based SDK flow
     }
   })();
 }
 
 /**
- * Text-to-Speech: Converts text to speech verbatim.
- * Uses gpt-audio-mini model via Replit AI Integrations.
+ * Text-to-Speech placeholder.
+ * Gemini does not currently have a direct REST-based TTS in this SDK.
  */
 export async function textToSpeech(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy",
   format: "wav" | "mp3" | "flac" | "opus" | "pcm16" = "wav"
 ): Promise<Buffer> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-audio-mini",
-    modalities: ["text", "audio"],
-    audio: { voice, format },
-    messages: [
-      { role: "system", content: "You are an assistant that performs text-to-speech." },
-      { role: "user", content: `Repeat the following text verbatim: ${text}` },
-    ],
-  });
-  const audioData = (response.choices[0]?.message as any)?.audio?.data ?? "";
-  return Buffer.from(audioData, "base64");
+  // Placeholder implementation - Gemini doesn't have direct TTS in this SDK
+  console.warn("Gemini Text-to-Speech is not directly supported in this SDK version.");
+  return Buffer.from("");
 }
 
 /**
- * Streaming Text-to-Speech: Converts text to speech with real-time streaming.
- * Uses gpt-audio-mini model via Replit AI Integrations.
- * Note: Streaming only supports pcm16 output format.
+ * Streaming Text-to-Speech placeholder.
  */
 export async function textToSpeechStream(
   text: string,
   voice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer" = "alloy"
 ): Promise<AsyncIterable<string>> {
-  const stream = await openai.chat.completions.create({
-    model: "gpt-audio-mini",
-    modalities: ["text", "audio"],
-    audio: { voice, format: "pcm16" },
-    messages: [
-      { role: "system", content: "You are an assistant that performs text-to-speech." },
-      { role: "user", content: `Repeat the following text verbatim: ${text}` },
-    ],
-    stream: true,
-  });
-
   return (async function* () {
-    for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta as any;
-      if (!delta) continue;
-      if (delta?.audio?.data) {
-        yield delta.audio.data;
-      }
-    }
+    console.warn("Gemini Text-to-Speech streaming is not directly supported in this SDK version.");
+    yield "";
   })();
 }
 
 /**
- * Speech-to-Text: Transcribes audio using dedicated transcription model.
- * Uses gpt-4o-mini-transcribe for accurate transcription.
+ * Speech-to-Text: Transcribes audio using Gemini's multimodal capabilities.
  */
 export async function speechToText(
   audioBuffer: Buffer,
   format: "wav" | "mp3" | "webm" = "wav"
 ): Promise<string> {
-  const file = await toFile(audioBuffer, `audio.${format}`);
-  const response = await openai.audio.transcriptions.create({
-    file,
-    model: "gpt-4o-mini-transcribe",
+  const audioBase64 = audioBuffer.toString("base64");
+  const response = await gemini.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { data: audioBase64, mimeType: `audio/${format}` } },
+        { text: "Transcribe the audio accurately." }
+      ]
+    }],
   });
-  return response.text;
+  return response.text || "";
 }
 
 /**
- * Streaming Speech-to-Text: Transcribes audio with real-time streaming.
- * Uses gpt-4o-mini-transcribe for accurate transcription.
+ * Streaming Speech-to-Text: Transcribes audio with streaming.
  */
 export async function speechToTextStream(
   audioBuffer: Buffer,
   format: "wav" | "mp3" | "webm" = "wav"
 ): Promise<AsyncIterable<string>> {
-  const file = await toFile(audioBuffer, `audio.${format}`);
-  const stream = await openai.audio.transcriptions.create({
-    file,
-    model: "gpt-4o-mini-transcribe",
-    stream: true,
+  const audioBase64 = audioBuffer.toString("base64");
+  const responseStream = await gemini.models.generateContentStream({
+    model: "gemini-2.0-flash",
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { data: audioBase64, mimeType: `audio/${format}` } },
+        { text: "Transcribe the audio accurately." }
+      ]
+    }],
   });
 
   return (async function* () {
-    for await (const event of stream) {
-      if (event.type === "transcript.text.delta") {
-        yield event.delta;
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        yield chunk.text;
       }
     }
   })();
@@ -324,7 +300,7 @@ export async function* voiceChatWithTextModel(
     inputFormat = "wav",
     systemPrompt = "You are a helpful assistant.",
     chatHistory = [],
-    textModel = "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025
+    textModel = "gemini-2.0-flash",
     locale = "en",
   } = options;
 
@@ -332,18 +308,17 @@ export async function* voiceChatWithTextModel(
   const userText = await speechToText(audioBuffer, inputFormat);
   yield { type: "user_transcript", data: userText };
 
-  // 2. Build messages for text model
-  const messages = [
-    { role: "system" as const, content: systemPrompt },
-    ...chatHistory,
-    { role: "user" as const, content: userText },
+  // 2. Build contents for gemini
+  const contents = [
+    { role: "user", parts: [{ text: systemPrompt }] },
+    ...chatHistory.map(h => ({ role: h.role === "assistant" ? "model" : "user", parts: [{ text: h.content }] })),
+    { role: "user", parts: [{ text: userText }] },
   ];
 
-  // 3. Stream text from LLM
-  const textStream = await openai.chat.completions.create({
+  // 3. Stream text from Gemini
+  const textStream = await gemini.models.generateContentStream({
     model: textModel,
-    messages,
-    stream: true,
+    contents,
   });
 
   // 4. Parse sentences and dispatch TTS in parallel
@@ -366,9 +341,6 @@ export async function* voiceChatWithTextModel(
 
   /**
    * Yield audio chunks from active TTS streams in sequence order.
-   * - Always yields from the current sequence (nextSeqToYield) first
-   * - Buffers are not needed here because we yield directly from iterators
-   * - When current sequence's TTS is done, moves to next
    */
   async function* drainAudioInOrder(): AsyncGenerator<VoiceChatStreamEvent> {
     while (activeStreams.length > 0) {
@@ -402,7 +374,7 @@ export async function* voiceChatWithTextModel(
 
   // 5. Process text stream: parse sentences, dispatch TTS, yield audio
   for await (const chunk of textStream) {
-    const token = chunk.choices[0]?.delta?.content || "";
+    const token = chunk.text || "";
     if (!token) continue;
 
     fullTranscript += token;

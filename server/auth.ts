@@ -126,4 +126,14 @@ export function setupAuth(app: Express) {
         if (!req.isAuthenticated()) return res.sendStatus(401);
         res.json(req.user);
     });
+
+    app.patch("/api/user", async (req, res, next) => {
+        if (!req.isAuthenticated()) return res.sendStatus(401);
+        try {
+            const updatedUser = await storage.updateUser((req.user as User).id, req.body);
+            res.json(updatedUser);
+        } catch (error) {
+            next(error);
+        }
+    });
 }

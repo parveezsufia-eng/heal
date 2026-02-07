@@ -1,5 +1,5 @@
 import pLimit from "p-limit";
-import pRetry from "p-retry";
+import pRetry, { AbortError } from "p-retry";
 
 /**
  * Batch Processing Utilities
@@ -16,12 +16,11 @@ import pRetry from "p-retry";
  *   artworks,
  *   async (artwork) => {
  *     // Your custom LLM logic here
- *     const response = await openai.chat.completions.create({
- *       model: "gpt-5.1",
- *       messages: [{ role: "user", content: `Categorize: ${artwork.name}` }],
- *       response_format: { type: "json_object" },
+ *     const response = await gemini.models.generateContent({
+ *       model: "gemini-2.0-flash",
+ *       contents: [{ role: "user", parts: [{ text: `Categorize: ${artwork.name}` }] }],
  *     });
- *     return JSON.parse(response.choices[0]?.message?.content || "{}");
+ *     return JSON.parse(response.text || "{}");
  *   },
  *   { concurrency: 2, retries: 5 }
  * );
@@ -107,7 +106,7 @@ export async function batchProcess<T, R>(
               throw error; // Rethrow to trigger p-retry
             }
             // For non-rate-limit errors, abort immediately
-            throw new pRetry.AbortError(
+            throw new AbortError(
               error instanceof Error ? error : new Error(String(error))
             );
           }
@@ -132,7 +131,7 @@ export async function batchProcess<T, R>(
 export async function batchProcessWithSSE<T, R>(
   items: T[],
   processor: (item: T, index: number) => Promise<R>,
-  sendEvent: (event: { type: string; [key: string]: unknown }) => void,
+  sendEvent: (event: { type: string;[key: string]: unknown }) => void,
   options: Omit<BatchOptions, "concurrency" | "onProgress"> = {}
 ): Promise<R[]> {
   const { retries = 5, minTimeout = 1000, maxTimeout = 15000 } = options;
@@ -156,7 +155,7 @@ export async function batchProcessWithSSE<T, R>(
           factor: 2,
           onFailedAttempt: (error) => {
             if (!isRateLimitError(error)) {
-              throw new pRetry.AbortError(
+              throw new AbortError(
                 error instanceof Error ? error : new Error(String(error))
               );
             }

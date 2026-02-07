@@ -34,6 +34,7 @@ export type User = typeof users.$inferSelect;
 // Conversations for AI chat
 export const conversations = pgTable("conversations", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   type: text("type").notNull().default("chat"),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
@@ -50,6 +51,7 @@ export const messages = pgTable("messages", {
 // Mood entries for mood tracking
 export const moodEntries = pgTable("mood_entries", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   mood: text("mood").notNull(),
   note: text("note"),
   sleepHours: integer("sleep_hours"),
@@ -62,6 +64,7 @@ export const moodEntries = pgTable("mood_entries", {
 // Tasks for to-do list
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   completed: boolean("completed").default(false).notNull(),
   category: text("category").default("general"),
@@ -72,6 +75,7 @@ export const tasks = pgTable("tasks", {
 // Reminders
 export const reminders = pgTable("reminders", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   time: timestamp("time").notNull(),
@@ -83,6 +87,7 @@ export const reminders = pgTable("reminders", {
 // Habits for habit tracking
 export const habits = pgTable("habits", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   frequency: text("frequency").default("daily"),
@@ -100,6 +105,7 @@ export const habitCompletions = pgTable("habit_completions", {
 // Journal entries with AI insights
 export const journalEntries = pgTable("journal_entries", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   content: text("content").notNull(),
   mood: text("mood"),
@@ -113,6 +119,7 @@ export const journalEntries = pgTable("journal_entries", {
 // Therapist sessions
 export const therapistSessions = pgTable("therapist_sessions", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   therapistName: text("therapist_name").notNull(),
   specialty: text("specialty"),
   sessionDate: timestamp("session_date").notNull(),
@@ -126,6 +133,7 @@ export const therapistSessions = pgTable("therapist_sessions", {
 // Crisis alerts for tracking crisis detection events
 export const crisisAlerts = pgTable("crisis_alerts", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   triggerPhrase: text("trigger_phrase").notNull(),
   responseGiven: text("response_given").notNull(),
   severity: text("severity").default("medium"), // low, medium, high
@@ -136,6 +144,7 @@ export const crisisAlerts = pgTable("crisis_alerts", {
 // Mood analytics for weekly/monthly aggregated insights
 export const moodAnalytics = pgTable("mood_analytics", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   periodType: text("period_type").notNull(), // weekly, monthly
   periodStart: timestamp("period_start").notNull(),
   periodEnd: timestamp("period_end").notNull(),
@@ -150,6 +159,7 @@ export const moodAnalytics = pgTable("mood_analytics", {
 // Personalized daily routines
 export const routines = pgTable("routines", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   routineType: text("routine_type").notNull(), // anxiety, sleep, productivity, self-care
   schedule: jsonb("schedule"), // JSON array of time-based activities
@@ -161,6 +171,7 @@ export const routines = pgTable("routines", {
 // Personalized learning paths
 export const learningPaths = pgTable("learning_paths", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(), // e.g., "Handling Overthinking"
   description: text("description"),
   lessons: jsonb("lessons"), // JSON array of lesson objects
@@ -172,6 +183,7 @@ export const learningPaths = pgTable("learning_paths", {
 // AI-generated affirmations
 export const affirmations = pgTable("affirmations", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   category: text("category"), // motivation, self-love, confidence, etc.
   basedOnMood: text("based_on_mood"), // What mood this was generated for
@@ -179,20 +191,68 @@ export const affirmations = pgTable("affirmations", {
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
+// Meal entries for nutritional tracking
+export const meals = pgTable("meals", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mealType: text("meal_type").notNull(), // breakfast, lunch, dinner, snack
+  name: text("name").notNull(),
+  calories: integer("calories").notNull(),
+  time: text("time"),
+  completed: boolean("completed").default(false).notNull(),
+  prescribedBy: text("prescribed_by"),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+});
+
+// Session table for connect-pg-simple
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
 // Insert schemas
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, createdAt: true });
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
+
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
 export const insertMoodEntrySchema = createInsertSchema(moodEntries).omit({ id: true, createdAt: true });
+export type InsertMoodEntry = z.infer<typeof insertMoodEntrySchema>;
+
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true });
+export type InsertTask = z.infer<typeof insertTaskSchema>;
+
 export const insertReminderSchema = createInsertSchema(reminders).omit({ id: true, createdAt: true });
+export type InsertReminder = z.infer<typeof insertReminderSchema>;
+
 export const insertHabitSchema = createInsertSchema(habits).omit({ id: true, createdAt: true });
+export type InsertHabit = z.infer<typeof insertHabitSchema>;
+
 export const insertJournalEntrySchema = createInsertSchema(journalEntries).omit({ id: true, createdAt: true });
+export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
+
 export const insertTherapistSessionSchema = createInsertSchema(therapistSessions).omit({ id: true, createdAt: true });
+export type InsertTherapistSession = z.infer<typeof insertTherapistSessionSchema>;
+
 export const insertCrisisAlertSchema = createInsertSchema(crisisAlerts).omit({ id: true, createdAt: true });
+export type InsertCrisisAlert = z.infer<typeof insertCrisisAlertSchema>;
+
 export const insertMoodAnalyticsSchema = createInsertSchema(moodAnalytics).omit({ id: true, createdAt: true });
+export type InsertMoodAnalytic = z.infer<typeof insertMoodAnalyticsSchema>;
+
 export const insertRoutineSchema = createInsertSchema(routines).omit({ id: true, createdAt: true });
+export type InsertRoutine = z.infer<typeof insertRoutineSchema>;
+
 export const insertLearningPathSchema = createInsertSchema(learningPaths).omit({ id: true, createdAt: true });
+export type InsertLearningPath = z.infer<typeof insertLearningPathSchema>;
+
 export const insertAffirmationSchema = createInsertSchema(affirmations).omit({ id: true, createdAt: true });
+export type InsertAffirmation = z.infer<typeof insertAffirmationSchema>;
+
+export const insertMealSchema = createInsertSchema(meals).omit({ id: true, createdAt: true });
+export type InsertMeal = z.infer<typeof insertMealSchema>;
 
 // Types
 export type Conversation = typeof conversations.$inferSelect;
@@ -208,3 +268,4 @@ export type MoodAnalytic = typeof moodAnalytics.$inferSelect;
 export type Routine = typeof routines.$inferSelect;
 export type LearningPath = typeof learningPaths.$inferSelect;
 export type Affirmation = typeof affirmations.$inferSelect;
+export type Meal = typeof meals.$inferSelect;

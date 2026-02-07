@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { chatStorage } from "../chat/storage";
-import { openai, speechToText, voiceChatWithTextModel, convertWebmToWav } from "./client";
+import { gemini, speechToText, voiceChatWithTextModel, convertWebmToWav } from "./client";
 
 // Note: Set express.json({ limit: "50mb" }) for audio payloads.
 // Note: Use convertWebmToWav() to convert browser WebM to WAV before API calls.
@@ -19,7 +19,7 @@ export function registerAudioRoutes(app: Express): void {
   // Get single conversation with messages
   app.get("/api/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       const conversation = await chatStorage.getConversation(id);
       if (!conversation) {
         return res.status(404).json({ error: "Conversation not found" });
@@ -47,7 +47,7 @@ export function registerAudioRoutes(app: Express): void {
   // Delete conversation
   app.delete("/api/conversations/:id", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       await chatStorage.deleteConversation(id);
       res.status(204).send();
     } catch (error) {
@@ -61,7 +61,7 @@ export function registerAudioRoutes(app: Express): void {
   // For text model control, chain: speechToText() -> text model -> textToSpeech()
   app.post("/api/conversations/:id/messages", async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.id);
+      const conversationId = parseInt(req.params.id as string);
       const { audio, voice = "alloy", inputFormat = "wav" } = req.body;
 
       if (!audio) {
@@ -89,28 +89,22 @@ export function registerAudioRoutes(app: Express): void {
 
       res.write(`data: ${JSON.stringify({ type: "user_transcript", data: userTranscript })}\n\n`);
 
-      // 5. Stream audio response from gpt-audio-mini
-      const stream = await openai.chat.completions.create({
-        model: "gpt-audio-mini",
-        modalities: ["text", "audio"],
-        audio: { voice, format: "pcm16" },
-        messages: chatHistory,
-        stream: true,
+      // 5. Stream response from Gemini
+      const responseStream = await gemini.models.generateContentStream({
+        model: "gemini-2.0-flash",
+        contents: [
+          { role: "user", parts: [{ text: "You are a helpful assistant." }] },
+          { role: "user", parts: [{ text: `Transcribe and provide insights for: ${userTranscript}` }] }
+        ],
       });
 
       let assistantTranscript = "";
 
-      for await (const chunk of stream) {
-        const delta = chunk.choices?.[0]?.delta as any;
-        if (!delta) continue;
-
-        if (delta?.audio?.transcript) {
-          assistantTranscript += delta.audio.transcript;
-          res.write(`data: ${JSON.stringify({ type: "transcript", data: delta.audio.transcript })}\n\n`);
-        }
-
-        if (delta?.audio?.data) {
-          res.write(`data: ${JSON.stringify({ type: "audio", data: delta.audio.data })}\n\n`);
+      for await (const chunk of responseStream) {
+        const chunkText = chunk.text || "";
+        if (chunkText) {
+          assistantTranscript += chunkText;
+          res.write(`data: ${JSON.stringify({ type: "transcript", data: chunkText })}\n\n`);
         }
       }
 
@@ -135,7 +129,7 @@ export function registerAudioRoutes(app: Express): void {
   // Supports multilingual sentence detection via locale parameter
   app.post("/api/conversations/:id/voice-stream", async (req: Request, res: Response) => {
     try {
-      const conversationId = parseInt(req.params.id);
+      const conversationId = parseInt(req.params.id as string);
       const { audio, voice = "alloy", inputFormat = "wav", locale = "en" } = req.body;
 
       if (!audio) {

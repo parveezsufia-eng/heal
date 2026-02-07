@@ -13,7 +13,11 @@ export function getApiUrl(): string {
   if (__DEV__) {
     const debuggerHost = Constants.expoConfig?.hostUri;
     const address = debuggerHost?.split(":")[0];
-    if (address) {
+
+    // Only use local address if it looks like an IP or a local hostname (not a tunnel)
+    const isTunnel = address?.includes("exp.direct") || address?.includes("proxy");
+
+    if (address && !isTunnel) {
       // Assuming server runs on 5000
       return `http://${address}:5000`;
     }

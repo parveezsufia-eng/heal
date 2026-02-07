@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
@@ -66,6 +67,7 @@ function setupBodyParsing(app: express.Application) {
 
 function setupRequestLogging(app: express.Application) {
   app.use((req, res, next) => {
+    console.log(`[RAW REQUEST] ${req.method} ${req.path}`);
     const start = Date.now();
     const path = req.path;
     let capturedJsonResponse: Record<string, unknown> | undefined = undefined;

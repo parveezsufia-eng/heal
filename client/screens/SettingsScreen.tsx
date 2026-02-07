@@ -8,6 +8,7 @@ import {
   Platform,
   Linking,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
@@ -17,11 +18,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { Card } from "@/components/Card";
 import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const { theme } = useTheme();
+  const navigation = useNavigation<any>();
+  const { logoutMutation } = useAuth();
 
   const [notifications, setNotifications] = useState(true);
   const [dailyReminders, setDailyReminders] = useState(true);
@@ -196,7 +200,7 @@ export default function SettingsScreen() {
           Emergency Support
         </ThemedText>
         <Card style={[styles.card, { backgroundColor: Colors.light.emergency + "10" }]}>
-          <Pressable 
+          <Pressable
             style={styles.settingRow}
             onPress={() => {
               if (Platform.OS !== "web") {
@@ -219,7 +223,7 @@ export default function SettingsScreen() {
             <Feather name="chevron-right" size={20} color={Colors.light.emergency} />
           </Pressable>
           <View style={[styles.divider, { backgroundColor: Colors.light.emergency + "20" }]} />
-          <Pressable 
+          <Pressable
             style={styles.settingRow}
             onPress={() => Linking.openURL("sms:741741?body=HOME")}
           >
@@ -296,7 +300,10 @@ export default function SettingsScreen() {
           Account
         </ThemedText>
         <Card style={[styles.card, { backgroundColor: theme.backgroundDefault }]}>
-          <Pressable style={styles.settingRow}>
+          <Pressable
+            style={styles.settingRow}
+            onPress={() => navigation.navigate("EditProfile")}
+          >
             <View style={styles.settingInfo}>
               <View style={[styles.settingIcon, { backgroundColor: Colors.light.primary + "20" }]}>
                 <Feather name="user" size={18} color={Colors.light.primary} />
@@ -311,7 +318,10 @@ export default function SettingsScreen() {
             <Feather name="chevron-right" size={20} color={theme.textSecondary} />
           </Pressable>
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
-          <Pressable style={styles.settingRow}>
+          <Pressable
+            style={styles.settingRow}
+            onPress={() => logoutMutation.mutate()}
+          >
             <View style={styles.settingInfo}>
               <View style={[styles.settingIcon, { backgroundColor: Colors.light.emergency + "20" }]}>
                 <Feather name="log-out" size={18} color={Colors.light.emergency} />

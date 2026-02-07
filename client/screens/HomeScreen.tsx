@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -23,6 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import type { HomeStackParamList } from "@/navigation/HomeStackNavigator";
+import { HealLogo } from "@/components/HealLogo";
 import { SunflowerLogo } from "@/components/SunflowerLogo";
 
 
@@ -163,6 +164,63 @@ export default function HomeScreen() {
   const [isAnalyzingMood, setIsAnalyzingMood] = useState(false);
   const [moodInsight, setMoodInsight] = useState<string | null>(null);
 
+  // Sync data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [habitsRes, tasksRes, mealsRes] = await Promise.all([
+          fetch(new URL("/api/habits", getApiUrl()).toString()),
+          fetch(new URL("/api/tasks", getApiUrl()).toString()),
+          fetch(new URL("/api/meals", getApiUrl()).toString()),
+        ]);
+
+        if (habitsRes.ok) {
+          const habitsData = await habitsRes.json();
+          if (habitsData.length > 0) {
+            setHabits(habitsData.map((h: any) => ({
+              id: h.id.toString(),
+              name: h.name,
+              icon: h.icon || "list",
+              completed: h.completed || false,
+              streak: h.streak || 0,
+            })));
+          }
+        }
+
+        if (tasksRes.ok) {
+          const tasksData = await tasksRes.json();
+          if (tasksData.length > 0) {
+            setTasks(tasksData.map((t: any) => ({
+              id: t.id.toString(),
+              text: t.name,
+              time: t.time || "All day",
+              completed: t.completed || false,
+            })));
+          }
+        }
+
+        if (mealsRes.ok) {
+          const mealsData = await mealsRes.json();
+          if (mealsData.length > 0) {
+            setMealPlan(mealsData.map((m: any) => ({
+              id: m.id.toString(),
+              mealType: m.mealType,
+              name: m.name,
+              calories: m.calories,
+              time: m.time,
+              completed: m.completed,
+              prescribedBy: m.prescribedBy
+            })));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to sync data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleMoodSelect = (moodId: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -178,7 +236,9 @@ export default function HomeScreen() {
     setIsAnalyzingMood(true);
     try {
       const moodLabel = moods.find(m => m.id === selectedMood)?.label || selectedMood;
-      const response = await fetch(new URL("/api/ai/analyze-mood", getApiUrl()).toString(), {
+
+      // 1. Get AI Analysis
+      const analysisResponse = await fetch(new URL("/api/ai/analyze-mood", getApiUrl()).toString(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -188,10 +248,23 @@ export default function HomeScreen() {
           stressLevel,
         }),
       });
-      const data = await response.json();
-      setMoodInsight(data.analysis);
+      const analysisData = await analysisResponse.json();
+      setMoodInsight(analysisData.analysis);
+
+      // 2. Persist Mood Entry to DB
+      await fetch(new URL("/api/mood-entries", getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mood: moodLabel,
+          note: moodNote,
+          sleepHours: parseFloat(sleepHours) || null,
+          stressLevel,
+          aiAnalysis: analysisData.analysis
+        }),
+      });
     } catch (error) {
-      console.error("Mood analysis error:", error);
+      console.error("Mood analysis/save error:", error);
       setMoodInsight("I'm having trouble analyzing right now. Remember, it's okay to not be okay. Take a moment to breathe deeply.");
     } finally {
       setIsAnalyzingMood(false);
@@ -204,28 +277,77 @@ export default function HomeScreen() {
     setMoodInsight(null);
   };
 
-  const toggleTask = (id: string) => {
+  const toggleTask = async (id: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const newStatus = !task.completed;
+
+    // Optimistic UI update
     setTasks(prev =>
-      prev.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
+      prev.map(t =>
+        t.id === id ? { ...t, completed: newStatus } : t
       )
     );
+
+    try {
+      await fetch(new URL(`/api/tasks/${id}`, getApiUrl()).toString(), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: newStatus }),
+      });
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      // Rollback on error
+      setTasks(prev =>
+        prev.map(t =>
+          t.id === id ? { ...t, completed: !newStatus } : t
+        )
+      );
+    }
   };
 
-  const toggleHabit = (id: string) => {
+  const toggleHabit = async (id: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+
+    const habit = habits.find(h => h.id === id);
+    if (!habit) return;
+
+    const newStatus = !habit.completed;
+    const newStreak = newStatus ? habit.streak + 1 : habit.streak - 1;
+
+    // Optimistic UI update
     setHabits(prev =>
-      prev.map(habit =>
-        habit.id === id
-          ? { ...habit, completed: !habit.completed, streak: habit.completed ? habit.streak - 1 : habit.streak + 1 }
-          : habit
+      prev.map(h =>
+        h.id === id
+          ? { ...h, completed: newStatus, streak: newStreak }
+          : h
       )
     );
+
+    try {
+      await fetch(new URL(`/api/habits/${id}/complete`, getApiUrl()).toString(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: newStatus }),
+      });
+    } catch (error) {
+      console.error("Failed to update habit:", error);
+      // Rollback
+      setHabits(prev =>
+        prev.map(h =>
+          h.id === id
+            ? { ...h, completed: !newStatus, streak: habit.streak }
+            : h
+        )
+      );
+    }
   };
 
   const completedHabits = habits.filter(h => h.completed).length;
@@ -239,15 +361,38 @@ export default function HomeScreen() {
 
   const currentRecipes = dietRecipes[selectedCondition] || dietRecipes.anxiety;
 
-  const toggleMeal = (id: string) => {
+  const toggleMeal = async (id: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+
+    const meal = mealPlan.find(m => m.id === id);
+    if (!meal) return;
+
+    const newStatus = !meal.completed;
+
+    // Optimistic UI update
     setMealPlan(prev =>
-      prev.map(meal =>
-        meal.id === id ? { ...meal, completed: !meal.completed } : meal
+      prev.map(m =>
+        m.id === id ? { ...m, completed: newStatus } : m
       )
     );
+
+    try {
+      await fetch(new URL(`/api/meals/${id}`, getApiUrl()).toString(), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: newStatus }),
+      });
+    } catch (error) {
+      console.error("Failed to update meal:", error);
+      // Rollback
+      setMealPlan(prev =>
+        prev.map(m =>
+          m.id === id ? { ...m, completed: !newStatus } : m
+        )
+      );
+    }
   };
 
   const completedMeals = mealPlan.filter(m => m.completed).length;
@@ -319,7 +464,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.searchRow}>
-          <Pressable style={[styles.searchBar, { borderColor: theme.border }]}>
+          <Pressable
+            style={[styles.searchBar, { borderColor: theme.border }]}
+            onPress={handleOpenChat}
+          >
             <Feather name="cpu" size={18} color={Colors.light.primary} />
             <ThemedText style={[styles.searchPlaceholder, { color: theme.textSecondary }]}>
               Ask AI anything...
@@ -337,15 +485,18 @@ export default function HomeScreen() {
 
         <View style={styles.header}>
           <View style={styles.headerTextContainer}>
+            <View style={styles.logoRow}>
+              <HealLogo size={40} />
+              <ThemedText style={styles.brandText}>Heal Here</ThemedText>
+            </View>
             <ThemedText style={styles.greeting}>{greeting} ✨</ThemedText>
             <ThemedText style={styles.headerTitle}>
               Finding Your Light
             </ThemedText>
             <ThemedText style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
-              Your path to wellness starts here
+              Your journey to inner peace starts here
             </ThemedText>
           </View>
-          <SunflowerLogo size={60} />
         </View>
 
         <View style={styles.section}>
@@ -377,60 +528,52 @@ export default function HomeScreen() {
           </View>
           <View style={styles.aiFeaturesGrid}>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("CBTTools")}
             >
-              <Feather name="refresh-cw" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>CBT Tools</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Thought reframing</ThemedText>
+              <Feather name="refresh-cw" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>CBT Tools</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Thought reframing</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardBlue }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("MoodAnalytics")}
             >
-              <Feather name="bar-chart-2" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Mood Analytics</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Track patterns</ThemedText>
+              <Feather name="bar-chart-2" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>Mood Analytics</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Track patterns</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardGreen }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("ConsultationAdvisor")}
             >
-              <Feather name="users" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Life Advisor</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Career, finance</ThemedText>
+              <Feather name="users" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>Life Advisor</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Career, finance</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.secondary + "30" }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("RoutineCoach")}
             >
-              <Feather name="calendar" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Routine Coach</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Daily wellness</ThemedText>
+              <Feather name="calendar" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>Routine Coach</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Daily wellness</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("LearningPaths")}
             >
-              <Feather name="book" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Learning Paths</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Personal growth</ThemedText>
+              <Feather name="book" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>Learning Paths</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Personal growth</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardBlue }]}
+              style={styles.minimalFeatureCard}
               onPress={() => navigation.navigate("DailyAffirmations")}
             >
-              <Feather name="heart" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Affirmations</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Daily positivity</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.aiFeatureCard, { backgroundColor: Colors.light.cardPeach }]}
-              onPress={() => navigation.navigate("ProgressDashboard")}
-            >
-              <Feather name="trending-up" size={22} color={Colors.light.primary} />
-              <ThemedText style={styles.aiFeatureTitle}>Dashboard</ThemedText>
-              <ThemedText style={[styles.aiFeatureDesc, { color: theme.textSecondary }]}>Transformation</ThemedText>
+              <Feather name="heart" size={20} color={Colors.light.primary} />
+              <ThemedText style={styles.minimalFeatureTitle}>Affirmations</ThemedText>
+              <ThemedText style={[styles.minimalFeatureDesc, { color: theme.textSecondary }]}>Daily positivity</ThemedText>
             </Pressable>
           </View>
         </View>
@@ -1591,5 +1734,37 @@ const styles = StyleSheet.create({
   aiFeatureDesc: {
     fontSize: 12,
     fontFamily: "PlusJakartaSans_400Regular",
+  },
+  logoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  brandText: {
+    fontSize: 20,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.light.text,
+    letterSpacing: 1,
+  },
+  minimalFeatureCard: {
+    width: "47%",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: "#F8F9FA",
+    borderWidth: 1,
+    borderColor: "#E9ECEF",
+    gap: Spacing.xs,
+  },
+  minimalFeatureTitle: {
+    fontSize: 14,
+    fontFamily: "PlusJakartaSans_700Bold",
+    color: Colors.light.text,
+    marginTop: Spacing.xs,
+  },
+  minimalFeatureDesc: {
+    fontSize: 11,
+    fontFamily: "PlusJakartaSans_400Regular",
+    opacity: 0.7,
   },
 });

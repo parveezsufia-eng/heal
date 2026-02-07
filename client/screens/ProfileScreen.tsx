@@ -14,6 +14,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Colors, Spacing, BorderRadius } from "@/constants/theme";
 import { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
 import { getApiUrl } from "@/lib/query-client";
+import { useAuth } from "@/hooks/use-auth";
 
 type ProfileNavigationProp = NativeStackNavigationProp<ProfileStackParamList>;
 
@@ -46,6 +47,7 @@ export default function ProfileScreen() {
   const tabBarHeight = useBottomTabBarHeight();
   const { theme } = useTheme();
   const navigation = useNavigation<ProfileNavigationProp>();
+  const { user } = useAuth();
 
   const [showDashboardModal, setShowDashboardModal] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
@@ -92,6 +94,14 @@ export default function ProfileScreen() {
     }
   };
 
+  if (!user) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundRoot, justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={Colors.light.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
@@ -118,9 +128,9 @@ export default function ProfileScreen() {
             contentFit="contain"
           />
         </View>
-        <ThemedText style={styles.userName}>Guest User</ThemedText>
+        <ThemedText style={styles.userName}>{user.name}</ThemedText>
         <ThemedText style={[styles.userMeta, { color: theme.textSecondary }]}>
-          Member since January 2026
+          {user.email}
         </ThemedText>
       </View>
 
@@ -132,6 +142,15 @@ export default function ProfileScreen() {
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>{stat.label}</ThemedText>
           </View>
         ))}
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Medical History Summary</ThemedText>
+        <View style={[styles.progressCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <ThemedText style={{ color: theme.textSecondary, fontStyle: user.medicalHistory ? "normal" : "italic" }}>
+            {user.medicalHistory || "No medical history recorded."}
+          </ThemedText>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -195,7 +214,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <Pressable 
+      <Pressable
         style={[styles.aiDashboardCard, { backgroundColor: Colors.light.cardBlue }]}
         onPress={openDashboardModal}
         testID="button-open-dashboard"

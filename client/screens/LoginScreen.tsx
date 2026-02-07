@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
-import { SunflowerLogo } from "@/components/SunflowerLogo";
+import { HealLogo } from "@/components/HealLogo";
 import { ThemedText } from "@/components/ThemedText";
 import { Colors, Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,13 +38,7 @@ export default function LoginScreen() {
         >
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.header}>
-                    <SunflowerLogo size={80} />
-                    <ThemedText type="h1" style={styles.title}>
-                        Welcome Back
-                    </ThemedText>
-                    <ThemedText style={styles.subtitle}>
-                        Continue your journey to light
-                    </ThemedText>
+                    <HealLogo size={100} showTagline={true} />
                 </View>
 
                 <View style={styles.form}>
